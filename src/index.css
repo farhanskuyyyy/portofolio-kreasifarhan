@@ -1,0 +1,3089 @@
+/* ==========================================================================
+   INTERSTELLAR SPATIAL SYSTEM : STYLESHEET (ENHANCED SOLAR & CELESTIAL EDITION)
+   Farhan Arfianto Portfolio : Three.js Solar System, Neon Nodes & Roaming Fleet
+   ========================================================================== */
+
+:root {
+  /* Cinematic Interstellar Palette */
+  --bg-basalt: #101216;
+  --bg-slate: #1A1E24;
+  --bg-card: #222730;
+  --bg-card-hover: #29303B;
+
+  /* Typography Colors */
+  --text-ivory: #F5F2EB;
+  --text-sandstone: #C8BFAF;
+  --text-silver: #9BA4AB;
+  --text-mineral: #5C646E;
+
+  /* Luminous Neon Accents */
+  --accent-amber: #D4A373;
+  --accent-amber-neon: #E0A96D;
+  --accent-amber-glow: rgba(212, 163, 115, 0.45);
+  --accent-cyan-neon: #70A9A1;
+
+  /* Precise Hairline Borders */
+  --border-hairline: rgba(200, 191, 175, 0.15);
+  --border-hover: rgba(200, 191, 175, 0.4);
+  --border-active: #C8BFAF;
+
+  /* Typography Fonts */
+  --font-monumental: "Cinzel", "Avenir Next", "Georgia", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-telemetry: "JetBrains Mono", "Menlo", "Courier New", monospace;
+
+  /* Motion Curves */
+  --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-duration: 400ms;
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Baseline
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-basalt);
+  color: var(--text-sandstone);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Atmospheric & 3D WebGL Background Canvas
+   -------------------------------------------------------------------------- */
+#cosmic-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+
+.mist-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(200, 191, 175, 0.03) 0%, rgba(16, 18, 22, 0.78) 100%);
+  opacity: 0.85;
+}
+
+.shooting-stars-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shooting-star {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(245, 242, 235, 1) 0%, rgba(212, 163, 115, 0.8) 40%, transparent 100%);
+  border-radius: 999px;
+  pointer-events: auto;
+  cursor: pointer;
+  transform-origin: left center;
+  box-shadow: 0 0 10px rgba(212, 163, 115, 0.7);
+  animation: meteorFly var(--meteor-duration, 1.8s) linear forwards;
+}
+
+@keyframes meteorFly {
+  0% { transform: translate(0, 0) rotate(var(--meteor-angle, 35deg)) scaleX(0); opacity: 0; }
+  15% { opacity: 1; transform: translate(60px, 40px) rotate(var(--meteor-angle, 35deg)) scaleX(1); }
+  100% { transform: translate(680px, 440px) rotate(var(--meteor-angle, 35deg)) scaleX(1.4); opacity: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   Dynamic 3D Planet Floating Tooltip HUD
+   -------------------------------------------------------------------------- */
+.planet-hud-tooltip {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(16, 18, 22, 0.92);
+  border: 1.5px solid var(--accent-amber);
+  border-radius: 4px;
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-ivory);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(212, 163, 115, 0.4);
+  transform: translate(-50%, -130%);
+  opacity: 0;
+  transition: opacity 0.2s var(--spring-ease), transform 0.2s var(--spring-ease);
+}
+
+.planet-hud-tooltip.active {
+  opacity: 1;
+  transform: translate(-50%, -145%);
+}
+
+.tooltip-bracket {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Autonomous & Draggable Cosmic Fleet (Rockets & Aliens)
+   -------------------------------------------------------------------------- */
+.cosmic-fleet-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.draggable-entity {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s var(--spring-ease);
+}
+
+.draggable-entity:active {
+  cursor: grabbing;
+}
+
+.entity-tag {
+  font-family: var(--font-telemetry);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--accent-amber);
+  background: rgba(16, 18, 22, 0.85);
+  padding: 2px 6px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 2px;
+  margin-top: 6px;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Rocket Visual Models */
+.rocket-body {
+  position: relative;
+  width: 24px;
+  height: 52px;
+  background: var(--text-ivory);
+  border-radius: 12px 12px 4px 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(200, 191, 175, 0.2);
+  border: 1px solid rgba(200, 191, 175, 0.35);
+}
+
+.rocket-cockpit {
+  position: absolute;
+  top: 10px;
+  left: 6px;
+  width: 12px;
+  height: 14px;
+  background: var(--bg-basalt);
+  border-radius: 6px;
+}
+
+.rocket-cockpit.cockpit-amber {
+  background: var(--accent-amber);
+  box-shadow: 0 0 6px var(--accent-amber);
+}
+
+.rocket-wing {
+  position: absolute;
+  bottom: 4px;
+  width: 10px;
+  height: 22px;
+  background: var(--text-sandstone);
+  border-radius: 2px;
+}
+
+.rocket-wing.left-wing {
+  left: -8px;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+.rocket-wing.right-wing {
+  right: -8px;
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.rocket-wing.delta-wing {
+  height: 30px;
+  background: #B0A798;
+}
+
+.rocket-wing.heavy-wing {
+  width: 14px;
+  background: #8E96A0;
+}
+
+.rocket-thruster {
+  position: absolute;
+  bottom: -6px;
+  left: 6px;
+  width: 12px;
+  height: 6px;
+  background: #3A414D;
+  border-radius: 0 0 3px 3px;
+}
+
+.thruster-flame {
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  width: 8px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #F5F2EB 0%, var(--accent-amber) 40%, transparent 100%);
+  animation: thrusterPulse 0.15s infinite alternate;
+}
+
+.thruster-flame.flame-cyan {
+  background: linear-gradient(180deg, #F5F2EB 0%, #70A9A1 50%, transparent 100%);
+}
+
+.thruster-flame.flame-dual {
+  width: 12px;
+  left: 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #D4A373 60%, transparent 100%);
+}
+
+@keyframes thrusterPulse {
+  0% { transform: scaleY(0.85); opacity: 0.8; }
+  100% { transform: scaleY(1.35); opacity: 1; }
+}
+
+/* Alien Probe Visual Models */
+.alien-biosphere {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-amber);
+  background: radial-gradient(circle, rgba(212, 163, 115, 0.18) 0%, rgba(16, 18, 22, 0.7) 80%);
+  box-shadow: 0 0 16px rgba(212, 163, 115, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alien-biosphere.variant-chrono {
+  border-color: #E0A96D;
+  box-shadow: 0 0 20px rgba(224, 169, 109, 0.45);
+}
+
+.alien-biosphere.variant-void {
+  border-color: #70A9A1;
+  box-shadow: 0 0 20px rgba(112, 169, 161, 0.45);
+}
+
+.alien-core {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-sandstone);
+  box-shadow: 0 0 8px rgba(200, 191, 175, 0.8);
+}
+
+.alien-core.core-amber {
+  background: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-amber);
+}
+
+.alien-core.core-cyan {
+  background: #70A9A1;
+  box-shadow: 0 0 10px #70A9A1;
+}
+
+.alien-eye {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-basalt);
+}
+
+.alien-eye.eye-glow {
+  background: #FFFFFF;
+  box-shadow: 0 0 6px #FFFFFF;
+}
+
+.alien-tendril {
+  position: absolute;
+  bottom: -8px;
+  width: 2px;
+  height: 10px;
+  background: var(--accent-amber);
+  border-radius: 1px;
+}
+.alien-tendril.t1 { left: 14px; transform: rotate(-15deg); }
+.alien-tendril.t2 { left: 21px; height: 12px; }
+.alien-tendril.t3 { left: 28px; transform: rotate(15deg); }
+
+/* Initial Coordinates & 100% STRAIGHT Flight Trajectories (Lurus Sempurna, Beda Jalur) */
+#rocket-1 { top: 16vh; left: -160px; }
+#rocket-2 { top: 56vh; left: calc(100vw + 160px); }
+#rocket-3 { top: calc(100vh + 120px); left: 28vw; }
+#alien-1  { top: -140px; left: 74vw; }
+#alien-2  { top: 82vh; left: -140px; }
+#alien-3  { top: -130px; left: 8vw; }
+
+/* --------------------------------------------------------------------------
+   Dogfight Dynamic Curvilinear Flight Trajectories (Belok & Bank Maneuvers)
+   -------------------------------------------------------------------------- */
+
+/* Pair 1: Alien 1 (Evasive S-Curve) & Rocket 1 (Endurance Chaser) */
+#alien-1 {
+  top: -120px;
+  left: 60vw;
+}
+.flight-dogfight-alien1:not(.is-dragged) {
+  animation: alienEvasiveWeave 16s ease-in-out infinite;
+  animation-delay: 0s;
+}
+@keyframes alienEvasiveWeave {
+  0% {
+    transform: translate(0, 0) scale(0.65) rotate(165deg);
+    opacity: 0;
+  }
+  4% { opacity: 1; }
+  22% {
+    transform: translate(-14vw, 24vh) scale(0.9) rotate(205deg);
+  }
+  48% {
+    transform: translate(8vw, 48vh) scale(1.1) rotate(145deg);
+  }
+  74% {
+    transform: translate(-12vw, 76vh) scale(1.15) rotate(195deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(6vw, calc(100vh + 200px)) scale(0.75) rotate(170deg);
+    opacity: 0;
+  }
+}
+
+#rocket-1 {
+  top: -160px;
+  left: 62vw;
+}
+.flight-dogfight-rocket1:not(.is-dragged) {
+  animation: rocketChaserWeave 16s ease-in-out infinite;
+  animation-delay: 0.75s;
+}
+@keyframes rocketChaserWeave {
+  0% {
+    transform: translate(0, 0) scale(0.6) rotate(165deg);
+    opacity: 0;
+  }
+  4% { opacity: 1; }
+  22% {
+    transform: translate(-13vw, 22vh) scale(0.85) rotate(200deg);
+  }
+  48% {
+    transform: translate(7vw, 46vh) scale(1.05) rotate(148deg);
+  }
+  74% {
+    transform: translate(-11vw, 74vh) scale(1.1) rotate(190deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(6vw, calc(100vh + 200px)) scale(0.7) rotate(170deg);
+    opacity: 0;
+  }
+}
+
+/* Pair 2: Alien 2 (Wave Swoop) & Rocket 2 (Ranger Wing Pursuit) */
+#alien-2 {
+  top: 42vh;
+  left: calc(100vw + 120px);
+}
+.flight-dogfight-alien2:not(.is-dragged) {
+  animation: alienWaveSwoop 15s ease-in-out infinite;
+  animation-delay: -3s;
+}
+@keyframes alienWaveSwoop {
+  0% {
+    transform: translate(0, 0) scale(0.65) rotate(-90deg);
+    opacity: 0;
+  }
+  5% { opacity: 1; }
+  24% {
+    transform: translate(-28vw, -16vh) scale(0.9) rotate(-112deg);
+  }
+  50% {
+    transform: translate(-56vw, 15vh) scale(1.15) rotate(-68deg);
+  }
+  76% {
+    transform: translate(-84vw, -12vh) scale(1.05) rotate(-108deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(calc(-100vw - 280px), 6vh) scale(0.7) rotate(-90deg);
+    opacity: 0;
+  }
+}
+
+#rocket-2 {
+  top: 42vh;
+  left: calc(100vw + 180px);
+}
+.flight-dogfight-rocket2:not(.is-dragged) {
+  animation: rocketWavePursuit 15s ease-in-out infinite;
+  animation-delay: -2.25s;
+}
+@keyframes rocketWavePursuit {
+  0% {
+    transform: translate(0, 0) scale(0.6) rotate(-90deg);
+    opacity: 0;
+  }
+  5% { opacity: 1; }
+  24% {
+    transform: translate(-26vw, -14vh) scale(0.85) rotate(-110deg);
+  }
+  50% {
+    transform: translate(-54vw, 13vh) scale(1.1) rotate(-70deg);
+  }
+  76% {
+    transform: translate(-82vw, -10vh) scale(1.0) rotate(-105deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(calc(-100vw - 280px), 6vh) scale(0.65) rotate(-90deg);
+    opacity: 0;
+  }
+}
+
+/* Pair 3: Alien 3 (Slingshot Arc) & Rocket 3 (Lander Interceptor) */
+#alien-3 {
+  top: calc(100vh + 100px);
+  left: 10vw;
+}
+.flight-dogfight-alien3:not(.is-dragged) {
+  animation: alienSlingshotArc 18s ease-in-out infinite;
+  animation-delay: -7s;
+}
+@keyframes alienSlingshotArc {
+  0% {
+    transform: translate(0, 0) scale(0.6) rotate(25deg);
+    opacity: 0;
+  }
+  5% { opacity: 1; }
+  28% {
+    transform: translate(24vw, -36vh) scale(0.95) rotate(48deg);
+  }
+  58% {
+    transform: translate(52vw, -68vh) scale(1.2) rotate(15deg);
+  }
+  82% {
+    transform: translate(72vw, -92vh) scale(1.05) rotate(35deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(84vw, calc(-100vh - 220px)) scale(0.65) rotate(30deg);
+    opacity: 0;
+  }
+}
+
+#rocket-3 {
+  top: calc(100vh + 160px);
+  left: 8vw;
+}
+.flight-dogfight-rocket3:not(.is-dragged) {
+  animation: rocketSlingshotPursuit 18s ease-in-out infinite;
+  animation-delay: -6.2s;
+}
+@keyframes rocketSlingshotPursuit {
+  0% {
+    transform: translate(0, 0) scale(0.55) rotate(25deg);
+    opacity: 0;
+  }
+  5% { opacity: 1; }
+  28% {
+    transform: translate(22vw, -34vh) scale(0.9) rotate(45deg);
+  }
+  58% {
+    transform: translate(50vw, -66vh) scale(1.15) rotate(18deg);
+  }
+  82% {
+    transform: translate(70vw, -90vh) scale(1.0) rotate(32deg);
+  }
+  94% { opacity: 1; }
+  100% {
+    transform: translate(82vw, calc(-100vh - 220px)) scale(0.6) rotate(28deg);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Spatial App Shell
+   -------------------------------------------------------------------------- */
+.spatial-app {
+  position: relative;
+  z-index: 2;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Top Cockpit HUD
+   -------------------------------------------------------------------------- */
+.top-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(16, 18, 22, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10;
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-amber);
+  animation: beaconPulse 2.6s ease-in-out infinite;
+}
+
+@keyframes beaconPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.hud-callsign {
+  display: flex;
+  flex-direction: column;
+}
+
+.callsign-code {
+  font-family: var(--font-telemetry);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--text-ivory);
+}
+
+.callsign-sub {
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-mineral);
+}
+
+.hud-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.camera-mode-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 18, 22, 0.75);
+  padding: 3px;
+  border-radius: 4px;
+  border: 1px solid var(--border-hairline);
+}
+
+.cam-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 5px 11px;
+  color: var(--text-silver);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-ease);
+}
+
+.cam-btn:hover {
+  color: var(--text-ivory);
+  background: rgba(200, 191, 175, 0.08);
+}
+
+.cam-btn.active {
+  background: rgba(212, 163, 115, 0.16);
+  border-color: rgba(212, 163, 115, 0.4);
+  color: var(--accent-amber);
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coordinates-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: rgba(26, 30, 36, 0.7);
+  border: 1px solid var(--border-hairline);
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-sandstone);
+}
+
+.coord-icon {
+  color: var(--accent-amber);
+}
+
+.coord-sep {
+  color: var(--text-mineral);
+}
+
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: rgba(26, 30, 36, 0.85);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  color: var(--text-sandstone);
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-ease);
+}
+
+.hud-btn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card);
+  color: var(--text-ivory);
+}
+
+.hud-btn .btn-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-mineral);
+  transition: background 0.2s;
+}
+
+.hud-btn.active .btn-indicator {
+  background: var(--accent-amber);
+  box-shadow: 0 0 6px var(--accent-amber);
+}
+
+.hud-btn.highlight {
+  border-color: rgba(212, 163, 115, 0.4);
+  background: rgba(212, 163, 115, 0.14);
+  color: var(--text-ivory);
+}
+
+.hud-btn.highlight:hover {
+  background: rgba(212, 163, 115, 0.25);
+  border-color: var(--accent-amber);
+}
+
+/* --------------------------------------------------------------------------
+   Main Spatial Viewport
+   -------------------------------------------------------------------------- */
+.spatial-viewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   Four Circular Celestial Star Nodes (Different Sizes & Neon Glowing Borders)
+   -------------------------------------------------------------------------- */
+.quadrant-anchor {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quadrant-anchor.top-left {
+  top: 40px;
+  left: 45px;
+}
+
+.quadrant-anchor.top-right {
+  top: 35px;
+  right: 45px;
+}
+
+.quadrant-anchor.bottom-left {
+  bottom: 45px;
+  left: 50px;
+}
+
+.quadrant-anchor.bottom-right {
+  bottom: 40px;
+  right: 45px;
+}
+
+/* Base Celestial Orbit Node */
+.celestial-orbit-node {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(28, 33, 40, 0.94) 0%, rgba(16, 18, 22, 0.98) 85%);
+  border: 1.5px solid var(--accent-amber);
+  box-shadow: 0 0 16px var(--accent-amber-glow), inset 0 0 16px rgba(212, 163, 115, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: inherit;
+  transition: transform 0.3s var(--spring-ease), box-shadow 0.3s var(--spring-ease), border-color 0.3s;
+}
+
+/* Different Organic Sizes */
+.celestial-orbit-node.node-missions {
+  width: 195px;
+  height: 195px;
+  animation: floatBobbing1 7s ease-in-out infinite alternate;
+}
+
+.celestial-orbit-node.node-experience {
+  width: 215px;
+  height: 215px;
+  animation: floatBobbing2 8s ease-in-out infinite alternate;
+}
+
+.celestial-orbit-node.node-systems {
+  width: 175px;
+  height: 175px;
+  animation: floatBobbing3 6.5s ease-in-out infinite alternate;
+}
+
+.celestial-orbit-node.node-contact {
+  width: 200px;
+  height: 200px;
+  animation: floatBobbing1 7.5s ease-in-out infinite alternate;
+}
+
+/* Floating Bobbing Animations */
+@keyframes floatBobbing1 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+@keyframes floatBobbing2 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(9px); }
+}
+@keyframes floatBobbing3 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-7px); }
+}
+
+/* Neon Pulsating Halo */
+.node-neon-halo {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 163, 115, 0.25);
+  pointer-events: none;
+  animation: neonAuraPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes neonAuraPulse {
+  0% { transform: scale(0.97); opacity: 0.3; }
+  100% { transform: scale(1.06); opacity: 0.8; box-shadow: 0 0 15px rgba(212, 163, 115, 0.4); }
+}
+
+/* Hover State */
+.celestial-orbit-node:hover {
+  transform: scale(1.08) !important;
+  border-color: #FFFFFF;
+  box-shadow: 0 0 30px rgba(212, 163, 115, 0.7), inset 0 0 25px rgba(212, 163, 115, 0.3);
+}
+
+.celestial-orbit-node:hover .node-neon-halo {
+  border-color: #FFFFFF;
+  opacity: 1;
+}
+
+/* Inner Centered Content */
+.node-inner-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px;
+  pointer-events: none;
+}
+
+.node-index-badge {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent-amber);
+  margin-bottom: 6px;
+}
+
+.node-celestial-title {
+  font-family: var(--font-monumental);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-ivory);
+  margin-bottom: 6px;
+}
+
+.node-celestial-sub {
+  font-family: var(--font-telemetry);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-silver);
+  margin-bottom: 8px;
+}
+
+.node-beacon-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 6px var(--accent-amber);
+}
+
+/* --------------------------------------------------------------------------
+   Center Multi-Layered Orbit Core (3 Tracks, Layering & Faster Speeds)
+   -------------------------------------------------------------------------- */
+.center-spatial-core {
+  position: relative;
+  width: 500px;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+
+/* SVG Rotating circular text (Speed: 22s) */
+.orbit-text-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: spinOrbit 22s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes spinOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinOrbitCounter {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.orbit-svg-ring {
+  width: 100%;
+  height: 100%;
+}
+
+.orbit-text-path {
+  fill: var(--text-sandstone);
+  font-family: var(--font-telemetry);
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  opacity: 0.8;
+}
+
+/* Concentric Gyroscope Rings (Faster & Layered) */
+.gyro-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+  pointer-events: none;
+}
+
+/* Track 1: Outer track (Speed: 18s) */
+.gyro-ring.ring-outer.track-fast {
+  width: 440px;
+  height: 440px;
+  border-style: dashed;
+  border-color: rgba(200, 191, 175, 0.16);
+  animation: spinOrbit 18s linear infinite;
+  z-index: 2;
+}
+
+/* Track 2: Middle track (Speed: 13s Counter) */
+.gyro-ring.ring-middle.track-counter {
+  width: 380px;
+  height: 380px;
+  border-color: rgba(200, 191, 175, 0.22);
+  border-style: solid;
+  animation: spinOrbitCounter 13s linear infinite;
+  z-index: 3;
+}
+
+/* Track 3: Inner track (Speed: 9s) passing IN FRONT of central disk */
+.gyro-ring.ring-inner.track-inner-front {
+  width: 320px;
+  height: 320px;
+  border-style: dotted;
+  border-color: rgba(212, 163, 115, 0.4);
+  animation: spinOrbit 9s linear infinite;
+  z-index: 8;
+}
+
+.orbital-satellite-node {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-amber), 0 0 18px rgba(212, 163, 115, 0.6);
+  transform: translateX(-50%);
+}
+
+/* Central Cockpit Beacon Disk (Sitting precisely in the middle: z-index: 5) */
+.central-cockpit-beacon {
+  position: relative;
+  width: 290px;
+  height: 290px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(28, 33, 40, 0.94) 0%, rgba(16, 18, 22, 0.97) 90%);
+  border: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+.beacon-bezel {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 191, 175, 0.12);
+  pointer-events: none;
+}
+
+.beacon-pulse-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 163, 115, 0.25);
+  animation: beaconRingExpand 3.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes beaconRingExpand {
+  0% { transform: scale(0.95); opacity: 0.6; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+.beacon-reticle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.reticle-line {
+  position: absolute;
+  background: rgba(200, 191, 175, 0.12);
+}
+
+.reticle-line.h-line {
+  top: 50%;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+}
+
+.reticle-line.v-line {
+  left: 50%;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+}
+
+.beacon-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.beacon-badge {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(212, 163, 115, 0.12);
+  border: 1px solid rgba(212, 163, 115, 0.35);
+  color: var(--accent-amber);
+  margin-bottom: 12px;
+}
+
+.monumental-name {
+  font-family: var(--font-monumental);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text-ivory);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.monumental-role {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-sandstone);
+  margin-bottom: 12px;
+}
+
+.beacon-subtext {
+  font-size: 10px;
+  color: var(--text-mineral);
+  line-height: 1.4;
+  max-width: 190px;
+}
+
+/* --------------------------------------------------------------------------
+   Bottom Flight Telemetry Bar
+   -------------------------------------------------------------------------- */
+.bottom-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 28px;
+  border-top: 1px solid var(--border-hairline);
+  background: rgba(16, 18, 22, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10;
+  font-family: var(--font-telemetry);
+}
+
+.hud-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-ivory);
+}
+
+.stat-txt {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-mineral);
+}
+
+.hud-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+}
+
+.status-msg {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-sandstone);
+}
+
+/* --------------------------------------------------------------------------
+   Dynamic 3D Planet Floating HUD Markers
+   -------------------------------------------------------------------------- */
+.planet-hud-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  overflow: hidden;
+}
+
+.planet-floating-hud {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(16, 18, 22, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 163, 115, 0.32);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-ivory);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 10px rgba(212, 163, 115, 0.15);
+}
+
+.planet-floating-hud:hover,
+.planet-floating-hud.is-hovered {
+  border-color: #FFFFFF;
+  background: rgba(26, 30, 36, 0.95);
+  transform: translate(-50%, -50%) scale(1.14);
+  box-shadow: 0 0 25px rgba(212, 163, 115, 0.6), inset 0 0 12px rgba(212, 163, 115, 0.25);
+}
+
+.hud-target-bracket {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+.hud-planet-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hud-planet-pip.pip-gold {
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+}
+.hud-planet-pip.pip-cyan {
+  background: #5AAFA9;
+  box-shadow: 0 0 8px #5AAFA9;
+}
+.hud-planet-pip.pip-rust {
+  background: #C06C54;
+  box-shadow: 0 0 8px #C06C54;
+}
+.hud-planet-pip.pip-ivory {
+  background: #F5F2EB;
+  box-shadow: 0 0 8px #F5F2EB;
+}
+
+.hud-planet-index {
+  color: var(--accent-amber);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.hud-planet-name {
+  color: var(--text-ivory);
+  font-weight: 500;
+}
+
+.hud-action-callout {
+  display: none;
+  font-size: 0.6rem;
+  background: var(--accent-amber);
+  color: var(--bg-basalt);
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  letter-spacing: 0.06em;
+}
+
+.planet-floating-hud:hover .hud-action-callout,
+.planet-floating-hud.is-hovered .hud-action-callout {
+  display: inline-block;
+}
+
+/* --------------------------------------------------------------------------
+   Center Holographic Brand Identity
+   -------------------------------------------------------------------------- */
+.solar-hero-identity {
+  position: absolute;
+  top: 13%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-beacon-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 12px var(--accent-amber);
+  margin-bottom: 6px;
+  animation: beaconPing 2.2s infinite ease-out;
+}
+
+.hero-status-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: var(--accent-amber);
+  margin-bottom: 4px;
+}
+
+.hero-title-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-ivory);
+  margin: 0;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.85), 0 0 32px rgba(212, 163, 115, 0.28);
+}
+
+.hero-role-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.72rem, 1.2vw, 0.85rem);
+  letter-spacing: 0.14em;
+  color: var(--text-sandstone);
+  margin: 6px 0 0 0;
+}
+
+.hero-subline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(200, 191, 175, 0.65);
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------------
+   Propulsion Tech Stack Dock (Go, Node.js, PHP, Laravel, Next.js, Docker, Redis, Postgres, Grafana)
+   -------------------------------------------------------------------------- */
+.tech-stack-dock {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 18, 22, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(212, 163, 115, 0.32);
+  border-radius: 28px;
+  padding: 8px 22px 8px 22px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.65), 0 0 22px rgba(212, 163, 115, 0.15);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tech-stack-dock:hover {
+  border-color: rgba(212, 163, 115, 0.55);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.75), 0 0 32px rgba(212, 163, 115, 0.25);
+}
+
+.dock-title-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--text-sandstone);
+  opacity: 0.85;
+}
+
+.dock-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 6px var(--accent-amber);
+}
+
+.dock-chips-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tech-dock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(26, 30, 36, 0.9);
+  border: 1px solid rgba(200, 191, 175, 0.18);
+  border-radius: 16px;
+  padding: 5px 12px 5px 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-ivory);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tech-dock-chip:hover {
+  background: rgba(34, 39, 48, 0.98);
+  border-color: var(--accent-amber);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(212, 163, 115, 0.3);
+}
+
+.tech-logo-svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Modals Tech Logo Integrations */
+.skill-name-with-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skill-name-with-logo .tech-logo-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tech-tag.with-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 6px;
+}
+
+.tech-tag.with-logo .tech-logo-svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   Cinematic Cockpit Command Modals (Center Floating with Zoom In / Out)
+   -------------------------------------------------------------------------- */
+dialog.cockpit-modal {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+dialog.cockpit-modal[open] {
+  pointer-events: auto;
+}
+
+dialog.cockpit-modal::backdrop {
+  background: rgba(10, 12, 15, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.3s var(--spring-ease);
+}
+
+dialog.cockpit-modal[open]::backdrop {
+  opacity: 1;
+}
+
+.modal-window {
+  position: relative;
+  width: min(1040px, 92vw);
+  height: min(820px, 88vh);
+  background: rgba(22, 26, 32, 0.94);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  color: var(--text-sandstone);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(200, 191, 175, 0.05);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 32px 36px;
+  overflow: hidden;
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+/* HUD Framing Corner Brackets */
+.hud-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  border-color: var(--accent-amber);
+  border-style: solid;
+}
+
+.bracket-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+.bracket-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+.bracket-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+.bracket-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-hairline);
+  margin-bottom: 20px;
+}
+
+.sector-code-badge {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent-amber);
+  margin-bottom: 4px;
+}
+
+.modal-title {
+  font-family: var(--font-monumental);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-ivory);
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sector-nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 18, 22, 0.6);
+  padding: 3px;
+  border-radius: 4px;
+  border: 1px solid var(--border-hairline);
+}
+
+.sector-pill-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-silver);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sector-pill-btn:hover {
+  color: var(--text-ivory);
+  background: rgba(200, 191, 175, 0.08);
+}
+
+.sector-pill-btn.active {
+  background: rgba(212, 163, 115, 0.16);
+  border-color: rgba(212, 163, 115, 0.4);
+  color: var(--accent-amber);
+}
+
+.modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  background: rgba(26, 30, 36, 0.85);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  color: var(--text-sandstone);
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card);
+  color: var(--text-ivory);
+}
+
+.close-glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.modal-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.modal-body-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-body-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-body-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-hairline);
+  border-radius: 4px;
+}
+.modal-body-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-mineral);
+}
+
+/* --------------------------------------------------------------------------
+   Missions Tab & Filter Chips
+   -------------------------------------------------------------------------- */
+.project-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: rgba(26, 30, 36, 0.6);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-silver);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip:hover {
+  border-color: var(--border-hover);
+  color: var(--text-ivory);
+}
+
+.filter-chip.active {
+  background: rgba(200, 191, 175, 0.12);
+  border-color: var(--accent-amber);
+  color: var(--text-ivory);
+}
+
+.projects-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.project-card {
+  padding: 22px 24px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  transition: border-color 0.2s var(--spring-ease), transform 0.2s var(--spring-ease);
+}
+
+.project-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.card-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.badge-accent {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--accent-amber);
+}
+
+.badge-dim {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-mineral);
+  padding: 2px 6px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+}
+
+.card-title {
+  font-family: var(--font-monumental);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-ivory);
+  margin-bottom: 10px;
+}
+
+.card-summary {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-sandstone);
+  margin-bottom: 16px;
+}
+
+.card-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(16, 18, 22, 0.45);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-val {
+  font-family: var(--font-telemetry);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-ivory);
+}
+
+.metric-lbl {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--text-mineral);
+}
+
+.tech-stack-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.tech-tag {
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(26, 30, 36, 0.85);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-silver);
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-btn.primary {
+  background: rgba(212, 163, 115, 0.14);
+  border: 1px solid rgba(212, 163, 115, 0.35);
+  color: var(--text-ivory);
+}
+
+.card-btn.primary:hover {
+  background: rgba(212, 163, 115, 0.24);
+  border-color: var(--accent-amber);
+}
+
+/* --------------------------------------------------------------------------
+   Timeline (Work & Education Sub-Tabs)
+   -------------------------------------------------------------------------- */
+.timeline-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-chip {
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: rgba(26, 30, 36, 0.6);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-silver);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-chip:hover {
+  color: var(--text-ivory);
+}
+
+.tab-chip.active {
+  background: rgba(200, 191, 175, 0.12);
+  border-color: var(--accent-amber);
+  color: var(--text-ivory);
+}
+
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.timeline-entry {
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+
+.timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 16px;
+}
+
+.marker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-mineral);
+  border: 2px solid var(--bg-basalt);
+}
+
+.timeline-entry.current .marker-dot {
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+}
+
+.marker-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border-hairline);
+  margin-top: 6px;
+}
+
+.timeline-content {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 20px 22px;
+}
+
+.entry-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.entry-period {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent-amber);
+}
+
+.entry-badge {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hairline);
+  color: var(--text-mineral);
+}
+
+.entry-badge.active {
+  border-color: rgba(212, 163, 115, 0.4);
+  color: var(--accent-amber);
+}
+
+.entry-title {
+  font-family: var(--font-monumental);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-ivory);
+  margin-bottom: 4px;
+}
+
+.entry-company {
+  font-size: 12px;
+  color: var(--text-silver);
+  margin-bottom: 12px;
+}
+
+.entry-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-sandstone);
+  margin-bottom: 12px;
+}
+
+.entry-bullets {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entry-bullets li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.entry-bullets li::before {
+  content: "::";
+  position: absolute;
+  left: 0;
+  color: var(--accent-amber);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Systems Grid & Live Console
+   -------------------------------------------------------------------------- */
+.systems-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.system-card {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+}
+
+.system-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.system-icon {
+  color: var(--accent-amber);
+  font-size: 14px;
+}
+
+.system-card-header h3 {
+  font-family: var(--font-telemetry);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--text-ivory);
+}
+
+.system-desc {
+  font-size: 11px;
+  color: var(--text-mineral);
+  margin-bottom: 16px;
+}
+
+.skill-meter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skill-info {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  color: var(--text-sandstone);
+  margin-bottom: 4px;
+}
+
+.meter-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(16, 18, 22, 0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--text-sandstone) 0%, var(--accent-amber) 100%);
+  border-radius: 2px;
+  transition: width 1s var(--spring-ease);
+}
+
+.telemetry-console-box {
+  background: #0B0D10;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 16px 20px;
+}
+
+.console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-hairline);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+}
+
+.console-title {
+  color: var(--text-silver);
+  letter-spacing: 0.1em;
+}
+
+.console-status {
+  color: var(--accent-amber);
+  letter-spacing: 0.1em;
+}
+
+.console-log {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-sandstone);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* --------------------------------------------------------------------------
+   Contact Split Layout
+   -------------------------------------------------------------------------- */
+.contact-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.contact-subheading {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent-amber);
+  margin-bottom: 10px;
+}
+
+.contact-intro {
+  font-size: 12px;
+  color: var(--text-silver);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.telemetry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-sandstone);
+}
+
+.required {
+  color: var(--accent-amber);
+}
+
+.form-input, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-ivory);
+  font-family: var(--font-body);
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--accent-amber);
+  background: var(--bg-card-hover);
+}
+
+.form-error {
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  color: #E57373;
+  min-height: 14px;
+}
+
+.submit-transmission-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 4px;
+  background: rgba(212, 163, 115, 0.16);
+  border: 1px solid var(--accent-amber);
+  color: var(--text-ivory);
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.submit-transmission-btn:hover {
+  background: rgba(212, 163, 115, 0.28);
+  box-shadow: 0 4px 16px rgba(212, 163, 115, 0.25);
+}
+
+.form-feedback {
+  padding: 12px;
+  border-radius: 4px;
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+}
+
+.form-feedback.success {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  color: #A5D6A7;
+}
+
+.contact-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-card {
+  padding: 18px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+}
+
+.info-card.highlight-card {
+  border-color: rgba(212, 163, 115, 0.35);
+  background: rgba(34, 39, 48, 0.9);
+}
+
+.info-label {
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--accent-amber);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.copy-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(16, 18, 22, 0.5);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.copy-value {
+  font-family: var(--font-telemetry);
+  font-size: 12px;
+  color: var(--text-ivory);
+}
+
+.copy-btn {
+  padding: 4px 10px;
+  background: rgba(200, 191, 175, 0.12);
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+  color: var(--text-sandstone);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent-amber);
+  color: var(--text-ivory);
+}
+
+.direct-link {
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  color: var(--text-silver);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.direct-link:hover {
+  color: var(--accent-amber);
+}
+
+.info-val {
+  font-size: 13px;
+  color: var(--text-ivory);
+  margin-bottom: 4px;
+}
+
+.info-sub {
+  font-size: 11px;
+  color: var(--text-mineral);
+  line-height: 1.4;
+}
+
+.channel-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.channel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(16, 18, 22, 0.45);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-sandstone);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.channel-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-ivory);
+  background: rgba(16, 18, 22, 0.7);
+}
+
+.dossier-title {
+  font-family: var(--font-monumental);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-ivory);
+  margin-bottom: 4px;
+}
+
+.dossier-desc {
+  font-size: 11px;
+  color: var(--text-silver);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.download-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 4px;
+  background: rgba(212, 163, 115, 0.16);
+  border: 1px solid rgba(212, 163, 115, 0.4);
+  color: var(--text-ivory);
+  font-family: var(--font-telemetry);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.download-resume-btn:hover {
+  background: rgba(212, 163, 115, 0.28);
+  border-color: var(--accent-amber);
+}
+
+/* --------------------------------------------------------------------------
+   Mobile & Tablet Responsive System (390px - 1024px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .top-hud {
+    padding: 10px 18px;
+  }
+  .tech-stack-dock {
+    max-width: 92vw;
+  }
+  .modal-window {
+    width: 95vw;
+    height: 92vh;
+    padding: 24px 20px;
+  }
+  .systems-grid {
+    grid-template-columns: 1fr;
+  }
+  .contact-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Maintain full viewport 3D spatial app shell without broken scrollbars */
+  html, body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+
+  .spatial-app {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Compact Top Cockpit HUD */
+  .top-hud {
+    padding: max(10px, env(safe-area-inset-top)) 12px 6px;
+    height: auto;
+    min-height: 48px;
+    gap: 8px;
+  }
+
+  .hud-left {
+    gap: 6px;
+  }
+
+  .hud-beacon {
+    width: 7px;
+    height: 7px;
+  }
+
+  .callsign-code {
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+  }
+
+  .callsign-sub {
+    display: none;
+  }
+
+  .hud-center {
+    display: none;
+  }
+
+  .hud-right {
+    gap: 6px;
+  }
+
+  .coordinates-badge {
+    display: none;
+  }
+
+  .hud-btn {
+    padding: 6px 10px;
+    font-size: 8px;
+    min-height: 34px;
+    letter-spacing: 0.08em;
+  }
+
+  /* Center Solar Hero Identity */
+  .solar-hero-identity {
+    top: 22%;
+    padding: 0 16px;
+    width: 100%;
+  }
+
+  .hero-status-tag {
+    font-size: 7px;
+    letter-spacing: 0.16em;
+    padding: 2px 6px;
+    margin-bottom: 4px;
+  }
+
+  .hero-title-name {
+    font-size: 19px;
+    letter-spacing: 0.16em;
+    margin-bottom: 4px;
+  }
+
+  .hero-role-title {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    margin-bottom: 2px;
+  }
+
+  .hero-subline {
+    font-size: 7.5px;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+  }
+
+  /* Floating 3D Planet HUD Markers on mobile */
+  .planet-floating-hud {
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(16, 18, 22, 0.85);
+  }
+
+  .hud-planet-name,
+  .hud-action-callout {
+    display: none;
+  }
+
+  .hud-planet-index {
+    font-size: 9.5px;
+    font-weight: 600;
+  }
+
+  .hud-target-bracket {
+    font-size: 11px;
+  }
+
+  /* Tech Stack Propulsion Dock: Horizontal Swipe Carousel */
+  .tech-stack-dock {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+    transform: none;
+    padding: 8px 10px 8px;
+    border-radius: 18px;
+    background: rgba(18, 22, 28, 0.94);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.8), 0 0 14px rgba(212, 163, 115, 0.14);
+  }
+
+  .dock-title-strip {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    padding: 0 4px;
+  }
+
+  .dock-label {
+    font-size: 7.5px;
+    letter-spacing: 0.14em;
+  }
+
+  .dock-hint {
+    font-size: 6.5px;
+  }
+
+  .dock-chips-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 2px;
+  }
+
+  .dock-chips-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tech-dock-chip {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    min-height: 38px;
+    font-size: 8px;
+    gap: 6px;
+  }
+
+  .tech-logo-svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .chip-text {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  /* Orbital Perspective Dial HUD on Mobile */
+  .scroll-loop-hud {
+    position: fixed;
+    bottom: 78px;
+    right: 12px;
+    z-index: 98;
+    padding: 6px 10px 6px 8px;
+    gap: 8px;
+    border-radius: 28px;
+    background: rgba(16, 20, 26, 0.92);
+  }
+
+  .scroll-compass-ring {
+    width: 32px;
+    height: 32px;
+  }
+
+  .scroll-telemetry-title {
+    font-size: 7px;
+  }
+
+  .scroll-angle-display {
+    font-size: 12px;
+    min-width: 32px;
+  }
+
+  .scroll-sector-tag {
+    font-size: 7.5px;
+  }
+
+  .scroll-instruction-row {
+    margin-top: 0;
+  }
+
+  .scroll-hint-label {
+    display: none;
+  }
+
+  .scroll-auto-btn {
+    padding: 2px 5px;
+    font-size: 7px;
+  }
+
+  /* Fullscreen Cockpit Modals on Mobile */
+  .cockpit-modal {
+    padding: 0;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border: none;
+  }
+
+  .modal-window {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hud-bracket {
+    display: none;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .modal-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .sector-nav-pills {
+    display: flex !important;
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+    padding-bottom: 2px;
+  }
+
+  .sector-nav-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sector-pill-btn {
+    flex-shrink: 0;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .modal-close-btn {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-size: 15px;
+  }
+
+  .sector-code-badge {
+    font-size: 7.5px;
+  }
+
+  .modal-body-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+  }
+
+  .projects-grid,
+  .timeline-grid,
+  .systems-grid,
+  .contact-split-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .system-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .metric-card {
+    padding: 10px 12px;
+  }
+
+  .metric-val {
+    font-size: 12px;
+  }
+
+  .metric-lbl {
+    font-size: 7.5px;
+  }
+
+  .project-filters,
+  .timeline-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+
+  .project-filters::-webkit-scrollbar,
+  .timeline-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-chip,
+  .tab-chip {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+
+  .project-card,
+  .timeline-entry,
+  .system-card,
+  .info-card {
+    padding: 16px 14px;
+  }
+
+  .project-title {
+    font-size: 13px;
+  }
+
+  .entry-title {
+    font-size: 12px;
+  }
+
+  .telemetry-form {
+    padding: 14px 12px;
+  }
+
+  .form-input,
+  .form-textarea {
+    font-size: 13px;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   Orbital Perspective HUD (Scroll-Driven 360 Camera Loop Dial)
+   -------------------------------------------------------------------------- */
+.scroll-loop-hud {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px 10px 12px;
+  background: rgba(22, 26, 32, 0.90);
+  border: 1px solid rgba(212, 163, 115, 0.35);
+  border-radius: 36px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(212, 163, 115, 0.12);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  user-select: none;
+}
+
+.scroll-loop-hud:hover,
+.scroll-loop-hud.is-active {
+  border-color: rgba(77, 178, 255, 0.7);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(77, 178, 255, 0.25);
+}
+
+.scroll-compass-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(200, 191, 175, 0.35);
+  background: rgba(16, 18, 22, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.scroll-compass-ring:hover {
+  transform: scale(1.06);
+  border-color: var(--accent-amber);
+}
+
+.scroll-compass-needle {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%) rotate(0deg);
+  transform-origin: center center;
+  pointer-events: none;
+  transition: transform 0.08s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.scroll-compass-needle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4db2ff;
+  box-shadow: 0 0 10px #4db2ff, 0 0 16px rgba(77, 178, 255, 0.8);
+}
+
+.scroll-compass-needle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  opacity: 0.6;
+}
+
+.scroll-compass-center {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-ivory);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.scroll-telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scroll-telemetry-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scroll-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4db2ff;
+  box-shadow: 0 0 8px #4db2ff;
+  animation: radarPulse 1.8s infinite ease-in-out;
+}
+
+.scroll-telemetry-title {
+  font-family: var(--font-telemetry);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: var(--text-silver);
+  text-transform: uppercase;
+}
+
+.scroll-telemetry-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scroll-angle-display {
+  font-family: var(--font-telemetry);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-ivory);
+  letter-spacing: 0.08em;
+  min-width: 42px;
+}
+
+.scroll-sector-tag {
+  font-family: var(--font-telemetry);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--accent-amber);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.scroll-elevation-tag {
+  font-family: var(--font-telemetry);
+  font-size: 8.5px;
+  font-weight: 500;
+  color: #4db2ff;
+  letter-spacing: 0.08em;
+  background: rgba(77, 178, 255, 0.12);
+  border: 1px solid rgba(77, 178, 255, 0.35);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.scroll-zoom-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-ivory);
+  font-family: var(--font-telemetry);
+  font-size: 11px;
+  font-weight: 600;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.scroll-zoom-btn:hover {
+  background: rgba(77, 178, 255, 0.25);
+  border-color: #4db2ff;
+  color: #4db2ff;
+  transform: scale(1.08);
+}
+
+
+.scroll-instruction-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.scroll-hint-label {
+  font-family: var(--font-telemetry);
+  font-size: 8px;
+  color: var(--text-mineral-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.scroll-auto-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-silver);
+  font-family: var(--font-telemetry);
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scroll-auto-btn:hover,
+.scroll-auto-btn.active {
+  background: rgba(77, 178, 255, 0.2);
+  border-color: #4db2ff;
+  color: #4db2ff;
+}
+
+@media (max-width: 1024px) {
+  .scroll-loop-hud {
+    right: 16px;
+    bottom: 88px;
+    padding: 8px 12px;
+  }
+  .scroll-hint-label { display: none; }
+}
+
+
+/* --------------------------------------------------------------------------
+   Dogfight Combat Lasers & Explosion FX
+   -------------------------------------------------------------------------- */
+.dogfight-combat-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 95;
+  overflow: hidden;
+}
+
+.laser-bolt {
+  position: fixed;
+  pointer-events: none;
+  z-index: 96;
+  height: 3.5px;
+  border-radius: 3px;
+  transform-origin: 0% 50%;
+  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  transition: opacity 0.1s ease;
+}
+
+.laser-bolt.laser-cyan {
+  background: #4db2ff;
+  color: #4db2ff;
+}
+
+.laser-bolt.laser-amber {
+  background: #D4A373;
+  color: #D4A373;
+}
+
+.impact-spark {
+  position: fixed;
+  pointer-events: none;
+  z-index: 97;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: #ffffff;
+  box-shadow: 0 0 16px #4db2ff, 0 0 28px #D4A373;
+  animation: sparkBurst 0.35s ease-out forwards;
+}
+
+@keyframes sparkBurst {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+}
+
+.draggable-entity.alien-destroyed {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.01) !important;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.draggable-entity.alien-respawning {
+  animation: alienWarpIn 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes alienWarpIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(180deg);
+    filter: brightness(4) blur(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.3) rotate(0deg);
+    filter: brightness(2) blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+.alien-explosion-wrapper {
+  position: fixed;
+  pointer-events: none;
+  z-index: 120;
+  transform: translate(-50%, -50%);
+}
+
+.explosion-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%) scale(0.2);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 10%, rgba(77, 178, 255, 0.8) 40%, rgba(212, 163, 115, 0.4) 65%, transparent 80%);
+  animation: flashBurst 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes flashBurst {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+.explosion-shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%) scale(0.3);
+  border-radius: 50%;
+  border: 3px solid #4db2ff;
+  box-shadow: 0 0 20px #4db2ff, inset 0 0 16px rgba(77, 178, 255, 0.5);
+  animation: shockwaveExpand 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes shockwaveExpand {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; border-width: 4px; }
+  60% { opacity: 0.85; border-color: #D4A373; }
+  100% { transform: translate(-50%, -50%) scale(3.4); opacity: 0; border-width: 1px; }
+}
+
+.explosion-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px #4db2ff;
+  animation: particleFly 0.75s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes particleFly {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--p-tx), var(--p-ty)) scale(0.2);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,219 @@
+import React, { useState } from 'react';
+import { audioEngine } from '../../utils/audio';
+
+export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
+  const [activeTab, setActiveTab] = useState('work');
+
+  if (!isOpen) return null;
+
+  const handleTabClick = (tab) => {
+    audioEngine.playUiClick(840, 'sine', 0.03);
+    setActiveTab(tab);
+  };
+
+  const handleSectorSwitch = (sector) => {
+    audioEngine.playWarpSound();
+    onSwitchSector(sector);
+  };
+
+  return (
+    <dialog open className="cockpit-modal" aria-labelledby="exp-modal-title">
+      <div className="modal-window">
+        <span className="hud-bracket bracket-tl" aria-hidden="true"></span>
+        <span className="hud-bracket bracket-tr" aria-hidden="true"></span>
+        <span className="hud-bracket bracket-bl" aria-hidden="true"></span>
+        <span className="hud-bracket bracket-br" aria-hidden="true"></span>
+
+        <header className="modal-header">
+          <div className="modal-header-left">
+            <div className="sector-code-badge">SECTOR 02 // CAREER & EDUCATION</div>
+            <h2 id="exp-modal-title" class="modal-title">
+              FLIGHT LOG & MILESTONES
+            </h2>
+          </div>
+          <div className="modal-header-actions">
+            <div className="sector-nav-pills">
+              <button
+                type="button"
+                className="sector-pill-btn"
+                onClick={() => handleSectorSwitch('missions')}
+              >
+                01 MISSIONS
+              </button>
+              <button
+                type="button"
+                className="sector-pill-btn active"
+                onClick={() => handleSectorSwitch('experience')}
+              >
+                02 LOG
+              </button>
+              <button
+                type="button"
+                className="sector-pill-btn"
+                onClick={() => handleSectorSwitch('systems')}
+              >
+                03 SYSTEMS
+              </button>
+              <button
+                type="button"
+                className="sector-pill-btn"
+                onClick={() => handleSectorSwitch('contact')}
+              >
+                04 RELAY
+              </button>
+            </div>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={onClose}
+              autoFocus
+              aria-label="Close Experience Modal"
+            >
+              <span className="close-text">ESC</span>
+              <span className="close-glyph" aria-hidden="true">×</span>
+            </button>
+          </div>
+        </header>
+
+        <nav className="timeline-tabs" aria-label="Select log category">
+          <button
+            type="button"
+            className={`tab-chip ${activeTab === 'work' ? 'active' : ''}`}
+            onClick={() => handleTabClick('work')}
+          >
+            PROFESSIONAL EXPERIENCE
+          </button>
+          <button
+            type="button"
+            className={`tab-chip ${activeTab === 'education' ? 'active' : ''}`}
+            onClick={() => handleTabClick('education')}
+          >
+            FORMAL EDUCATION & DEGREES
+          </button>
+        </nav>
+
+        <div className="modal-body-scroll">
+          {activeTab === 'work' && (
+            <div id="timeline-work-view" className="timeline-container">
+              {/* Role 1: Lumoshive */}
+              <div className="timeline-entry current">
+                <div className="timeline-marker">
+                  <span className="marker-dot"></span>
+                  <span className="marker-line"></span>
+                </div>
+                <div className="timeline-content">
+                  <div className="entry-meta">
+                    <span className="entry-period">APRIL 2021 : PRESENT</span>
+                    <span className="entry-badge active">CURRENT MISSION</span>
+                  </div>
+                  <h3 className="entry-title">Software Developer (Full-time)</h3>
+                  <h4 className="entry-company">LUMOSHIVE : Jakarta, Indonesia</h4>
+                  <p className="entry-desc">
+                    Spearheading high-performance backend architecture, payment integrations, transactional middleware, and system observability suites across multiple production platforms.
+                  </p>
+                  <ul className="entry-bullets">
+                    <li>
+                      Architected a high-performance backend in <strong>Golang</strong> to ingest and process real-time external sports APIs, powering gameweek-based dream team selection mechanics and match score prediction systems.
+                    </li>
+                    <li>
+                      Engineered <strong>Airgift</strong>, a specialized transactional middleware connecting multiple top-up suppliers to portal merchants; utilized <strong>Laravel, Redis, PostgreSQL, Docker, Grafana, and Prometheus</strong> to orchestrate high-throughput multi-party transactions.
+                    </li>
+                    <li>
+                      Developed and launched a dedicated consumer <strong>game top-up portal</strong>, integrating multi-channel e-wallet and mobile billing (pulsa) payment gateways with automated delivery.
+                    </li>
+                    <li>
+                      Maintained, optimized, and upgraded core modules of an enterprise-grade <strong>HRIS (Human Resource Information System)</strong> website using Laravel, including attendance monitoring and employee directories.
+                    </li>
+                    <li>
+                      Containerized Laravel applications using Docker and implemented <strong>Grafana dashboards</strong> to monitor incoming/outgoing API requests, reducing production debugging latency.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Role 2: PT Anggada Duta Wisesa */}
+              <div className="timeline-entry">
+                <div className="timeline-marker">
+                  <span className="marker-dot"></span>
+                </div>
+                <div className="timeline-content">
+                  <div className="entry-meta">
+                    <span className="entry-period">MAY 2020 : MARCH 2021</span>
+                    <span className="entry-badge">COMPLETED</span>
+                  </div>
+                  <h3 className="entry-title">PHP Developer (Internship)</h3>
+                  <h4 className="entry-company">PT ANGGADA DUTA WISESA : Jakarta, Indonesia</h4>
+                  <p className="entry-desc">
+                    Engineered data warehouse extraction pipelines and maintained corporate E-Procurement client applications.
+                  </p>
+                  <ul className="entry-bullets">
+                    <li>
+                      Designed and executed complex SQL queries to analyze data warehouse repositories using <strong>Pentaho Data Integration (ETL)</strong>, generating actionable business insights.
+                    </li>
+                    <li>
+                      Developed new features, resolved bugs, and maintained corporate <strong>E-Procurement</strong> client applications built with <strong>PHP (CodeIgniter)</strong> and JavaScript, ensuring secure transaction modules.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'education' && (
+            <div id="timeline-education-view" className="timeline-container">
+              {/* Degree 1: UNINDRA */}
+              <div className="timeline-entry current">
+                <div className="timeline-marker">
+                  <span className="marker-dot"></span>
+                  <span className="marker-line"></span>
+                </div>
+                <div className="timeline-content">
+                  <div className="entry-meta">
+                    <span className="entry-period">2021 : 2025</span>
+                    <span className="entry-badge active">GPA 3.61 / 4.00</span>
+                  </div>
+                  <h3 className="entry-title">Bachelor of Science in Information Technology (S1)</h3>
+                  <h4 className="entry-company">Universitas Indraprasta PGRI (UNINDRA) : Jakarta, Indonesia</h4>
+                  <p className="entry-desc">
+                    Comprehensive study of software engineering principles, algorithm design, distributed computing, database management, and enterprise software architecture.
+                  </p>
+                  <ul className="entry-bullets">
+                    <li>
+                      Graduated with Honors / High Distinction with a cumulative Grade Point Average of <strong>3.61 / 4.00</strong>.
+                    </li>
+                    <li>
+                      Key Areas: PHP, Web Programming, Software Development Life Cycle, Database Normalization and Optimization.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Degree 2: SMKN 26 Jakarta */}
+              <div className="timeline-entry">
+                <div className="timeline-marker">
+                  <span className="marker-dot"></span>
+                </div>
+                <div className="timeline-content">
+                  <div className="entry-meta">
+                    <span className="entry-period">JULY 2017 : AUGUST 2021</span>
+                    <span className="entry-badge">GRADUATED</span>
+                  </div>
+                  <h3 className="entry-title">Vocational High School Diploma : Network & System Administration</h3>
+                  <h4 className="entry-company">SMKN 26 Jakarta : Jakarta, Indonesia</h4>
+                  <p className="entry-desc">
+                    Intensive 4-year vocational training specializing in computer networking, server provisioning, Linux administration, and network security infrastructure.
+                  </p>
+                  <ul className="entry-bullets">
+                    <li>
+                      Specialization: Network Infrastructure, Server Operating Systems (Linux/Unix), Routing, Switching, and Systems Administration.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </dialog>
+  );
+}
