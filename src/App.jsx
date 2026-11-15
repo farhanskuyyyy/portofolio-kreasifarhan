@@ -22,7 +22,7 @@ export default function App() {
     angle: 0,
     sector: 'FRONT OBLIQUE',
     elevationDeg: 15,
-    autoOrbit: false,
+    autoOrbit: true,
   });
   const [planetCoords, setPlanetCoords] = useState({});
   const [zoomAction, setZoomAction] = useState(null);

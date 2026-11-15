@@ -379,15 +379,17 @@ html, body {
    Dogfight Dynamic Curvilinear Flight Trajectories (Belok & Bank Maneuvers)
    -------------------------------------------------------------------------- */
 
+/* 3D Orbit Fleet Entities: Coordinated by CosmicCanvas */
+#alien-1, #alien-2, #alien-3,
+#rocket-1, #rocket-2, #rocket-3 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform, opacity;
+  animation: none !important;
+}
+
 /* Pair 1: Alien 1 (Evasive S-Curve) & Rocket 1 (Endurance Chaser) */
-#alien-1 {
-  top: -120px;
-  left: 60vw;
-}
-.flight-dogfight-alien1:not(.is-dragged) {
-  animation: alienEvasiveWeave 16s ease-in-out infinite;
-  animation-delay: 0s;
-}
 @keyframes alienEvasiveWeave {
   0% {
     transform: translate(0, 0) scale(0.65) rotate(165deg);
@@ -410,11 +412,8 @@ html, body {
   }
 }
 
-#rocket-1 {
-  top: -160px;
-  left: 62vw;
-}
-.flight-dogfight-rocket1:not(.is-dragged) {
+/* 3D positioned */
+.flight-dogfight-rocket1.legacy-disabled {
   animation: rocketChaserWeave 16s ease-in-out infinite;
   animation-delay: 0.75s;
 }
@@ -441,11 +440,8 @@ html, body {
 }
 
 /* Pair 2: Alien 2 (Wave Swoop) & Rocket 2 (Ranger Wing Pursuit) */
-#alien-2 {
-  top: 42vh;
-  left: calc(100vw + 120px);
-}
-.flight-dogfight-alien2:not(.is-dragged) {
+/* 3D positioned */
+.flight-dogfight-alien2.legacy-disabled {
   animation: alienWaveSwoop 15s ease-in-out infinite;
   animation-delay: -3s;
 }
@@ -471,11 +467,8 @@ html, body {
   }
 }
 
-#rocket-2 {
-  top: 42vh;
-  left: calc(100vw + 180px);
-}
-.flight-dogfight-rocket2:not(.is-dragged) {
+/* 3D positioned */
+.flight-dogfight-rocket2.legacy-disabled {
   animation: rocketWavePursuit 15s ease-in-out infinite;
   animation-delay: -2.25s;
 }
@@ -502,11 +495,8 @@ html, body {
 }
 
 /* Pair 3: Alien 3 (Slingshot Arc) & Rocket 3 (Lander Interceptor) */
-#alien-3 {
-  top: calc(100vh + 100px);
-  left: 10vw;
-}
-.flight-dogfight-alien3:not(.is-dragged) {
+/* 3D positioned */
+.flight-dogfight-alien3.legacy-disabled {
   animation: alienSlingshotArc 18s ease-in-out infinite;
   animation-delay: -7s;
 }
@@ -532,11 +522,8 @@ html, body {
   }
 }
 
-#rocket-3 {
-  top: calc(100vh + 160px);
-  left: 8vw;
-}
-.flight-dogfight-rocket3:not(.is-dragged) {
+/* 3D positioned */
+.flight-dogfight-rocket3.legacy-disabled {
   animation: rocketSlingshotPursuit 18s ease-in-out infinite;
   animation-delay: -6.2s;
 }
@@ -2744,17 +2731,143 @@ dialog.cockpit-modal[open]::backdrop {
   right: 28px;
   z-index: 100;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 16px 10px 12px;
-  background: rgba(22, 26, 32, 0.90);
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 10px 14px;
+  background: rgba(18, 22, 28, 0.94);
   border: 1px solid rgba(212, 163, 115, 0.35);
-  border-radius: 36px;
+  border-radius: 20px;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(212, 163, 115, 0.12);
   transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
   user-select: none;
+}
+
+.scroll-hud-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scroll-hud-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 163, 115, 0.3);
+  border-radius: 4px;
+  color: var(--color-gold);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scroll-hud-collapse-btn:hover {
+  background: rgba(212, 163, 115, 0.2);
+  border-color: var(--color-gold);
+  color: #FFFFFF;
+}
+
+.scroll-hud-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Floating Action Button when Telemetry HUD is Collapsed */
+.scroll-hud-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 10px;
+  background: rgba(16, 20, 26, 0.94);
+  border: 1px solid rgba(212, 163, 115, 0.55);
+  border-radius: 28px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(212, 163, 115, 0.25);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #FFFFFF;
+  user-select: none;
+}
+
+.scroll-hud-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  border-color: #4db2ff;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.8), 0 0 20px rgba(77, 178, 255, 0.4);
+}
+
+.hud-fab-radar-ring {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(212, 163, 115, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-fab-needle {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: linear-gradient(to bottom, #FF453A 0%, #FF453A 50%, rgba(200, 191, 175, 0.4) 50%, rgba(200, 191, 175, 0.4) 100%);
+  border-radius: 1px;
+  transform-origin: center center;
+}
+
+.hud-fab-beacon {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4db2ff;
+  box-shadow: 0 0 8px #4db2ff;
+  animation: beaconPulse 1.5s infinite;
+}
+
+.hud-fab-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.hud-fab-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--color-gold);
+}
+
+.hud-fab-deg {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+@keyframes beaconPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 
 .scroll-loop-hud:hover,
@@ -3181,7 +3294,7 @@ dialog.cockpit-modal[open]::backdrop {
    Celestial Skills Constellation (Floating Star Orbs)
    -------------------------------------------------------------------------- */
 .celestial-stars-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 10;
@@ -3190,17 +3303,23 @@ dialog.cockpit-modal[open]::backdrop {
 
 .celestial-skill-star {
   position: absolute;
-  left: var(--star-pos-left);
-  top: var(--star-pos-top);
+  left: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   cursor: pointer;
   pointer-events: auto;
   user-select: none;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
-  will-change: transform;
+  will-change: transform, opacity;
+  transition: filter 0.25s ease;
+}
+
+.celestial-skill-star:hover {
+  filter: brightness(1.25);
+  z-index: 40;
 }
 
 .celestial-skill-star:hover {
@@ -3221,12 +3340,13 @@ dialog.cockpit-modal[open]::backdrop {
 /* Spherical Glowing Celestial Body */
 .star-orb-body {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: calc(44px * var(--star-mastery-scale, 1));
+  height: calc(44px * var(--star-mastery-scale, 1));
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(var(--star-glow-rgb), 0.35) 0%, rgba(14, 17, 22, 0.88) 72%);
-  border: 1.5px solid var(--star-glow);
-  box-shadow: 0 0 16px rgba(var(--star-glow-rgb), 0.45), inset 0 0 12px rgba(var(--star-glow-rgb), 0.25);
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.22) 0%, rgba(16, 20, 26, 0.94) 70%);
+  border: 1.5px solid var(--star-glow, #d4a373);
+  box-shadow: 0 0 calc(18px * var(--star-mastery-scale, 1)) rgba(var(--star-glow-rgb), 0.55),
+              inset 0 0 12px rgba(var(--star-glow-rgb), 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3243,12 +3363,13 @@ dialog.cockpit-modal[open]::backdrop {
 /* Outer Pulsing Corona Ring */
 .star-corona-ring {
   position: absolute;
-  top: -6px;
-  left: -6px;
-  right: -6px;
-  bottom: -6px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(64px * var(--star-mastery-scale, 1));
+  height: calc(64px * var(--star-mastery-scale, 1));
   border-radius: 50%;
-  border: 1px dashed rgba(var(--star-glow-rgb), 0.4);
+  border: 1px dashed rgba(var(--star-glow-rgb), 0.45);
   animation: coronaSpin 14s linear infinite;
   pointer-events: none;
 }
@@ -3280,22 +3401,44 @@ dialog.cockpit-modal[open]::backdrop {
 }
 
 /* Subtle Label Pip */
-.star-label-pip {
-  font-family: var(--font-telemetry);
-  font-size: 7.5px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--text-ivory);
-  background: rgba(10, 12, 16, 0.88);
-  border: 1px solid rgba(var(--star-glow-rgb), 0.5);
-  border-radius: 3px;
-  padding: 1px 5px;
-  margin-top: 4px;
-  opacity: 0.85;
-  white-space: nowrap;
+.star-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  background: rgba(14, 17, 22, 0.90);
+  border: 1px solid rgba(var(--star-glow-rgb), 0.45);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.star-label-pip {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #F5F2EB;
+}
+
+.star-mastery-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--star-glow);
+  background: rgba(var(--star-glow-rgb), 0.18);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.celestial-skill-star:hover .star-meta-pill {
+  border-color: var(--star-glow);
+  box-shadow: 0 0 12px rgba(var(--star-glow-rgb), 0.5);
+  transform: translateY(2px);
 }
 
 .celestial-skill-star:hover .star-label-pip {
@@ -3306,19 +3449,19 @@ dialog.cockpit-modal[open]::backdrop {
 }
 
 /* Celestial Drift Animations (Smooth floating bobbing across space) */
-.celestial-skill-star.drift-1 {
+.celestial-skill-star.drift-legacy-1 {
   animation: celestialFloat1 9s ease-in-out infinite;
 }
-.celestial-skill-star.drift-2 {
+.celestial-skill-star.drift-legacy-2 {
   animation: celestialFloat2 11s ease-in-out infinite;
 }
-.celestial-skill-star.drift-3 {
+.celestial-skill-star.drift-legacy-3 {
   animation: celestialFloat3 10s ease-in-out infinite;
 }
-.celestial-skill-star.drift-4 {
+.celestial-skill-star.drift-legacy-4 {
   animation: celestialFloat4 12s ease-in-out infinite;
 }
-.celestial-skill-star.drift-5 {
+.celestial-skill-star.drift-legacy-5 {
   animation: celestialFloat5 8.5s ease-in-out infinite;
 }
 
