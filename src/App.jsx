@@ -4,7 +4,7 @@ import HudHeader from './components/HudHeader';
 import HeroOverlay from './components/HeroOverlay';
 import FleetEntities from './components/FleetEntities';
 import PlanetMarkers from './components/PlanetMarkers';
-import TechStackDock from './components/TechStackDock';
+import CelestialSkillStars from './components/CelestialSkillStars';
 import RadarHud from './components/RadarHud';
 
 import MissionsModal from './components/Modals/MissionsModal';
@@ -154,7 +154,7 @@ export default function App() {
         <main className="spatial-viewport" id="main-content">
           <PlanetMarkers coords={planetCoords} onSelectSector={handleOpenSector} />
           <HeroOverlay />
-          <TechStackDock onSelectTech={() => handleOpenSector('systems')} />
+          <CelestialSkillStars onSelectTech={() => handleOpenSector('systems')} />
           <RadarHud
             telemetry={telemetry}
             onResetView={handleResetView}
