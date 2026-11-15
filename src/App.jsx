@@ -6,6 +6,7 @@ import FleetEntities from './components/FleetEntities';
 import PlanetMarkers from './components/PlanetMarkers';
 import CelestialSkillStars from './components/CelestialSkillStars';
 import RadarHud from './components/RadarHud';
+import CosmicRocketOpening from './components/CosmicRocketOpening';
 
 import MissionsModal from './components/Modals/MissionsModal';
 import FlightLogModal from './components/Modals/FlightLogModal';
@@ -16,6 +17,7 @@ import { audioEngine } from './utils/audio';
 
 export default function App() {
   const [activeModal, setActiveModal] = useState(null); // 'missions' | 'experience' | 'systems' | 'contact' | null
+  const [showOpening, setShowOpening] = useState(true);
   const [camTarget, setCamTarget] = useState('overview');
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [telemetry, setTelemetry] = useState({
@@ -147,6 +149,7 @@ export default function App() {
           onOpenContact={() => handleOpenSector('contact')}
           audioEnabled={audioEnabled}
           onToggleAudio={handleToggleAudio}
+          onReplayLaunch={() => setShowOpening(true)}
         />
 
         <main className="spatial-viewport" id="main-content">
@@ -184,6 +187,11 @@ export default function App() {
         onClose={handleCloseModal}
         onSwitchSector={handleSwitchSector}
       />
+
+      {/* Opening Cosmic Rocket & Zipper Veil */}
+      {showOpening && (
+        <CosmicRocketOpening onComplete={() => setShowOpening(false)} />
+      )}
     </div>
   );
 }

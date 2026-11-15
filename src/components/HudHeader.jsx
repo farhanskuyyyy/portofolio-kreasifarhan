@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { audioEngine } from '../utils/audio';
 
-export default function HudHeader({ camTarget, onSetCamTarget, onOpenContact, audioEnabled, onToggleAudio }) {
+export default function HudHeader({ camTarget, onSetCamTarget, onOpenContact, audioEnabled, onToggleAudio, onReplayLaunch }) {
   const [timeStr, setTimeStr] = useState('00:00:00');
 
   useEffect(() => {
@@ -97,6 +97,19 @@ export default function HudHeader({ camTarget, onSetCamTarget, onOpenContact, au
           <span className="btn-indicator" aria-hidden="true" style={{ background: audioEnabled ? '#00e5ff' : '#4a5568' }}></span>
           <span className="btn-label">{audioEnabled ? 'AUDIO: ON' : 'AUDIO: OFF'}</span>
         </button>
+
+        {onReplayLaunch && (
+          <button
+            type="button"
+            className="hud-btn"
+            onClick={onReplayLaunch}
+            aria-label="Luncurkan ulang animasi gerbang kosmos"
+            title="Luncurkan ulang gerbang roket kosmos"
+          >
+            <span className="btn-indicator" aria-hidden="true" style={{ background: '#ffd54f' }}></span>
+            <span className="btn-label">LAUNCH</span>
+          </button>
+        )}
 
         <button
           type="button"

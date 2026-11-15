@@ -229,6 +229,123 @@ class CosmicAudioEngine {
     } catch (e) {}
   }
 
+  playRocketHover() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.12);
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (e) {}
+  }
+
+  playRocketIgnitionLaunch() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const ctx = this.ctx;
+      const now = ctx.currentTime;
+
+      // 1. Deep Sub-Bass Ignition Rumble
+      const rumbleOsc = ctx.createOscillator();
+      const rumbleGain = ctx.createGain();
+      rumbleOsc.type = 'triangle';
+      rumbleOsc.frequency.setValueAtTime(42, now);
+      rumbleOsc.frequency.exponentialRampToValueAtTime(95, now + 0.45);
+      rumbleOsc.frequency.exponentialRampToValueAtTime(32, now + 1.8);
+      rumbleGain.gain.setValueAtTime(0.18, now);
+      rumbleGain.gain.linearRampToValueAtTime(0.24, now + 0.3);
+      rumbleGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+      rumbleOsc.connect(rumbleGain);
+      rumbleGain.connect(ctx.destination);
+      rumbleOsc.start(now);
+      rumbleOsc.stop(now + 2.0);
+
+      // 2. Filtered Rocket Thruster Noise
+      const bufLen = Math.floor(ctx.sampleRate * 1.8);
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const bData = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        bData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.9));
+      }
+      const nSrc = ctx.createBufferSource();
+      nSrc.buffer = buf;
+      const nFilter = ctx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.setValueAtTime(140, now);
+      nFilter.frequency.exponentialRampToValueAtTime(1600, now + 1.2);
+      nFilter.Q.setValueAtTime(2.5, now);
+      const nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.08, now);
+      nGain.gain.linearRampToValueAtTime(0.20, now + 0.4);
+      nGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+      nSrc.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(ctx.destination);
+      nSrc.start(now);
+      nSrc.stop(now + 1.8);
+
+      // 3. Hypersonic Ascent Jet Tone
+      const jetOsc = ctx.createOscillator();
+      const jetGain = ctx.createGain();
+      jetOsc.type = 'sawtooth';
+      jetOsc.frequency.setValueAtTime(110, now + 0.15);
+      jetOsc.frequency.exponentialRampToValueAtTime(1480, now + 1.5);
+      jetGain.gain.setValueAtTime(0.001, now);
+      jetGain.gain.linearRampToValueAtTime(0.07, now + 0.35);
+      jetGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+      const jetFilter = ctx.createBiquadFilter();
+      jetFilter.type = 'lowpass';
+      jetFilter.frequency.setValueAtTime(800, now);
+      jetFilter.frequency.exponentialRampToValueAtTime(2400, now + 1.4);
+      jetOsc.connect(jetFilter);
+      jetFilter.connect(jetGain);
+      jetGain.connect(ctx.destination);
+      jetOsc.start(now + 0.15);
+      jetOsc.stop(now + 1.75);
+
+      // 4. Zipper Unlatching Mechanical Clicks
+      const clickCount = 14;
+      for (let c = 0; c < clickCount; c++) {
+        const cTime = now + 0.25 + c * 0.08;
+        const cOsc = ctx.createOscillator();
+        const cGain = ctx.createGain();
+        cOsc.type = 'sine';
+        cOsc.frequency.setValueAtTime(1200 + c * 45, cTime);
+        cGain.gain.setValueAtTime(0.035, cTime);
+        cGain.gain.exponentialRampToValueAtTime(0.0001, cTime + 0.025);
+        cOsc.connect(cGain);
+        cGain.connect(ctx.destination);
+        cOsc.start(cTime);
+        cOsc.stop(cTime + 0.03);
+      }
+
+      // 5. Celestial Portal Reveal Chime
+      [528, 660, 792, 1056].forEach((f, idx) => {
+        const chimeTime = now + 1.4 + idx * 0.08;
+        const cOsc = ctx.createOscillator();
+        const cGain = ctx.createGain();
+        cOsc.type = 'sine';
+        cOsc.frequency.setValueAtTime(f, chimeTime);
+        cGain.gain.setValueAtTime(0.04, chimeTime);
+        cGain.gain.exponentialRampToValueAtTime(0.0001, chimeTime + 0.55);
+        cOsc.connect(cGain);
+        cGain.connect(ctx.destination);
+        cOsc.start(chimeTime);
+        cOsc.stop(chimeTime + 0.6);
+      });
+    } catch (e) {}
+  }
+
   startAmbientDrone() {
     if (!this.ctx || this.ambientDrone) return;
     try {
