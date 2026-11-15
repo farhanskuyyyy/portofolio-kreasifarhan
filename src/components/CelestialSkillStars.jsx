@@ -224,69 +224,138 @@ export const TECH_STARS = [
   },
 ];
 
-export default function CelestialSkillStars({ onSelectTech }) {
-  const [activeStar, setActiveStar] = useState(null);
+export default function CelestialSkillStars() {
+  const [starStates, setStarStates] = useState({});
 
   const handleClick = (tech) => {
-    setActiveStar(tech.id);
-    audioEngine.playUiClick(tech.freq, 'sine', 0.08);
-    audioEngine.playAlienChime();
-    if (onSelectTech) onSelectTech('systems');
-    setTimeout(() => setActiveStar(null), 800);
+    const currentState = starStates[tech.id] || 'idle';
+    if (currentState !== 'idle') return;
+
+    // 1. Play cosmic pop explosion sound effect
+    audioEngine.playSkillPopExplosion(tech.freq);
+
+    // 2. Mark star as exploding
+    setStarStates((prev) => ({ ...prev, [tech.id]: 'exploding' }));
+
+    // Dispatch event to 3D scene
+    window.dispatchEvent(
+      new CustomEvent('skillStarExplode', { detail: { id: tech.id } })
+    );
+
+    // 3. After explosion blast dissipates (550ms), transition to hidden
+    setTimeout(() => {
+      setStarStates((prev) => ({ ...prev, [tech.id]: 'hidden' }));
+    }, 550);
+
+    // 4. Respawn sequence after 2.8s
+    setTimeout(() => {
+      audioEngine.playSkillRespawn(tech.freq);
+      setStarStates((prev) => ({ ...prev, [tech.id]: 'respawning' }));
+
+      window.dispatchEvent(
+        new CustomEvent('skillStarRespawn', { detail: { id: tech.id } })
+      );
+
+      // Settle back to fully active idle after warp-in (800ms)
+      setTimeout(() => {
+        setStarStates((prev) => ({ ...prev, [tech.id]: 'idle' }));
+      }, 800);
+    }, 2800);
   };
 
   return (
     <div className="celestial-stars-layer" aria-label="Constellation of Skills and Technologies">
-      {TECH_STARS.map((tech) => (
-        <div
-          key={tech.id}
-          id={`star-${tech.id}`}
-          className={`celestial-skill-star star-variant-${tech.id} ${activeStar === tech.id ? 'is-pulsing' : ''}`}
-          style={{
-            '--star-glow': tech.color,
-            '--star-glow-rgb': tech.rgb,
-            '--star-mastery-scale': tech.scale,
-          }}
-          onClick={() => handleClick(tech)}
-          title={tech.title}
-          role="button"
-          tabIndex={0}
-        >
-          {/* Distinct Gyro Orbit System & Satellite Probes tailored per tech */}
-          <div className="skill-gyro-system" aria-hidden="true">
-            <div className="skill-orbit-track track-primary">
-              <span className="skill-satellite-bead bead-primary" aria-hidden="true"></span>
-              {(tech.id === 'golang' || tech.id === 'redis') && (
-                <span className="skill-satellite-bead bead-secondary" aria-hidden="true"></span>
+      {TECH_STARS.map((tech) => {
+        const state = starStates[tech.id] || 'idle';
+        const isExploding = state === 'exploding';
+        const isHidden = state === 'hidden';
+        const isRespawning = state === 'respawning';
+
+        return (
+          <div
+            key={tech.id}
+            id={`star-${tech.id}`}
+            className={`celestial-skill-star star-variant-${tech.id} ${
+              isExploding ? 'is-exploding' : ''
+            } ${isHidden ? 'is-hidden' : ''} ${
+              isRespawning ? 'is-respawning' : ''
+            }`}
+            style={{
+              '--star-glow': tech.color,
+              '--star-glow-rgb': tech.rgb,
+              '--star-mastery-scale': tech.scale,
+            }}
+            onClick={() => handleClick(tech)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClick(tech);
+              }
+            }}
+            title={`${tech.title} (Click to Pop & Explode)`}
+            role="button"
+            tabIndex={0}
+          >
+            {/* Pop Explosion FX: Shockwave, Radial Sparks Burst & Energy Flare */}
+            {isExploding && (
+              <div className="pop-explosion-fx" aria-hidden="true">
+                <div className="pop-shockwave-ring"></div>
+                <div className="pop-flash-core"></div>
+                <div className="pop-sparks-burst">
+                  {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+                    <span
+                      key={deg}
+                      className="pop-spark-particle"
+                      style={{ '--spark-deg': `${deg}deg` }}
+                    ></span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Respawn Warp FX: Implosion Gather Ring */}
+            {isRespawning && (
+              <div className="pop-respawn-fx" aria-hidden="true">
+                <div className="pop-implosion-ring"></div>
+              </div>
+            )}
+
+            {/* Distinct Gyro Orbit System & Satellite Probes tailored per tech */}
+            <div className="skill-gyro-system" aria-hidden="true">
+              <div className="skill-orbit-track track-primary">
+                <span className="skill-satellite-bead bead-primary" aria-hidden="true"></span>
+                {(tech.id === 'golang' || tech.id === 'redis') && (
+                  <span className="skill-satellite-bead bead-secondary" aria-hidden="true"></span>
+                )}
+              </div>
+              <div className="skill-orbit-track track-secondary"></div>
+              {tech.id === 'laravel' && (
+                <div className="skill-orbit-track track-tertiary"></div>
+              )}
+              {tech.id === 'grafana' && (
+                <div className="radar-sweep-beam" aria-hidden="true"></div>
               )}
             </div>
-            <div className="skill-orbit-track track-secondary"></div>
-            {tech.id === 'laravel' && (
-              <div className="skill-orbit-track track-tertiary"></div>
-            )}
-            {tech.id === 'grafana' && (
-              <div className="radar-sweep-beam" aria-hidden="true"></div>
-            )}
-          </div>
 
-          {/* Celestial Body with Customized Architectural Geometry */}
-          <div className="star-orb-body">
-            <div className="star-orb-halo" aria-hidden="true"></div>
-            {tech.id === 'docker' ? (
-              <div className="star-cube-shell" aria-hidden="true"></div>
-            ) : (
-              <div className="star-wireframe-shell" aria-hidden="true"></div>
-            )}
-            <div className="star-orb-icon">{tech.svg}</div>
-          </div>
+            {/* Celestial Body with Customized Architectural Geometry */}
+            <div className="star-orb-body">
+              <div className="star-orb-halo" aria-hidden="true"></div>
+              {tech.id === 'docker' ? (
+                <div className="star-cube-shell" aria-hidden="true"></div>
+              ) : (
+                <div className="star-wireframe-shell" aria-hidden="true"></div>
+              )}
+              <div className="star-orb-icon">{tech.svg}</div>
+            </div>
 
-          {/* Floating Pill Tag with Mastery Indicator */}
-          <div className="star-meta-pill">
-            <span className="star-label-pip">{tech.name}</span>
-            <span className="star-mastery-badge">{tech.mastery}%</span>
+            {/* Floating Pill Tag with Mastery Indicator */}
+            <div className="star-meta-pill">
+              <span className="star-label-pip">{tech.name}</span>
+              <span className="star-mastery-badge">{tech.mastery}%</span>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

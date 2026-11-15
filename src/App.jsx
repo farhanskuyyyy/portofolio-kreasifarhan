@@ -152,7 +152,7 @@ export default function App() {
         <main className="spatial-viewport" id="main-content">
           <PlanetMarkers onSelectSector={handleOpenSector} />
           <HeroOverlay />
-          <CelestialSkillStars onSelectTech={() => handleOpenSector('systems')} />
+          <CelestialSkillStars />
           <RadarHud
             telemetry={telemetry}
             onResetView={handleResetView}

@@ -1454,27 +1454,27 @@ dialog.cockpit-modal {
 
 dialog.cockpit-modal[open] {
   pointer-events: auto;
-  /* Translucent spatial gradient: the active planet on the left remains illuminated and visible! */
+  /* Crystal-clear spatial backdrop without full-screen blur, so the active planet remains sharp & visible */
   background: linear-gradient(
     to right,
-    rgba(10, 12, 16, 0.12) 0%,
-    rgba(10, 12, 16, 0.32) 42%,
-    rgba(10, 12, 16, 0.74) 100%
+    rgba(10, 12, 16, 0.0) 0%,
+    rgba(10, 12, 16, 0.06) 45%,
+    rgba(10, 12, 16, 0.58) 100%
   );
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   animation: cockpitModalFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 dialog.cockpit-modal::backdrop {
   background: linear-gradient(
     to right,
-    rgba(10, 12, 16, 0.12) 0%,
-    rgba(10, 12, 16, 0.32) 42%,
-    rgba(10, 12, 16, 0.74) 100%
+    rgba(10, 12, 16, 0.0) 0%,
+    rgba(10, 12, 16, 0.06) 45%,
+    rgba(10, 12, 16, 0.58) 100%
   );
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   opacity: 0;
   transition: opacity 0.25s var(--spring-ease);
 }
@@ -1487,13 +1487,13 @@ dialog.cockpit-modal[open]::backdrop {
   position: relative;
   width: min(720px, 94vw);
   height: min(860px, 88vh);
-  background: rgba(18, 22, 28, 0.86); /* Translucent glass so background stars shimmer */
+  background: rgba(15, 18, 24, 0.94); /* High contrast solid glass console */
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(212, 163, 115, 0.35);
+  border: 1px solid rgba(212, 163, 115, 0.45);
   border-radius: 12px;
   color: var(--text-sandstone);
-  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(212, 163, 115, 0.08);
+  box-shadow: -28px 0 70px rgba(0, 0, 0, 0.92), 0 0 35px rgba(212, 163, 115, 0.12);
   display: flex;
   flex-direction: column;
   padding: 24px 28px 30px;
@@ -1501,6 +1501,22 @@ dialog.cockpit-modal[open]::backdrop {
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
+}
+
+/* Desktop Landscape 60:40 Split Layout (60% cosmos space on left, 40% cockpit modal on right) */
+@media (min-width: 1024px) and (orientation: landscape), (min-width: 1280px) {
+  dialog.cockpit-modal {
+    justify-content: flex-end;
+    padding-right: clamp(16px, 2.5vw, 40px);
+    padding-left: 0;
+  }
+
+  .modal-window {
+    width: 40vw;
+    min-width: 460px;
+    max-width: 720px;
+    height: min(880px, 90vh);
+  }
 }
 
 dialog.cockpit-modal[open] .modal-window {
@@ -1512,18 +1528,14 @@ dialog.cockpit-modal[open] .modal-window {
 @keyframes cockpitModalFadeIn {
   from {
     background: transparent;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
   }
   to {
     background: linear-gradient(
       to right,
-      rgba(10, 12, 16, 0.12) 0%,
-      rgba(10, 12, 16, 0.32) 42%,
-      rgba(10, 12, 16, 0.74) 100%
+      rgba(10, 12, 16, 0.0) 0%,
+      rgba(10, 12, 16, 0.06) 45%,
+      rgba(10, 12, 16, 0.58) 100%
     );
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
   }
 }
 
@@ -3390,6 +3402,166 @@ dialog.cockpit-modal[open] .modal-window {
   0% { transform: scale(1.35); filter: brightness(2.2); }
   50% { transform: scale(0.92); }
   100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Pop Explosion & Respawn Interactive Mechanics */
+.celestial-skill-star.is-exploding {
+  pointer-events: none;
+}
+
+.celestial-skill-star.is-exploding .star-orb-body {
+  animation: popBlastCore 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.celestial-skill-star.is-exploding .skill-gyro-system,
+.celestial-skill-star.is-exploding .star-meta-pill {
+  animation: popDisperse 0.4s ease-out forwards;
+}
+
+/* Hidden State during Explosion Cooldown */
+.celestial-skill-star.is-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0) !important;
+}
+
+/* Respawn Warp-In State */
+.celestial-skill-star.is-respawning {
+  animation: starRespawnWarp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+}
+
+/* Pop Explosion FX Layers */
+.pop-explosion-fx {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.pop-shockwave-ring {
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--star-glow, #ffffff);
+  box-shadow: 0 0 20px var(--star-glow, #ffffff), inset 0 0 10px var(--star-glow, #ffffff);
+  animation: popShockwave 0.55s ease-out forwards;
+}
+
+.pop-flash-core {
+  position: absolute;
+  top: -24px;
+  left: -24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 20%, var(--star-glow, #ffffff) 70%, transparent 100%);
+  animation: popFlashCore 0.45s ease-out forwards;
+}
+
+.pop-sparks-burst {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.pop-spark-particle {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff, 0 0 16px var(--star-glow, #d4a373);
+  animation: popSparkBurst 0.55s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+}
+
+.pop-respawn-fx {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 45;
+}
+
+.pop-implosion-ring {
+  position: absolute;
+  top: -45px;
+  left: -45px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px dashed var(--star-glow, #ffffff);
+  box-shadow: 0 0 25px var(--star-glow, #ffffff);
+  animation: popImplosionRing 0.75s ease-in forwards;
+}
+
+@keyframes popBlastCore {
+  0% { transform: scale(1); filter: brightness(1); opacity: 1; }
+  35% { transform: scale(1.95); filter: brightness(3.5); opacity: 0.95; }
+  100% { transform: scale(2.8); filter: brightness(4.0); opacity: 0; }
+}
+
+@keyframes popDisperse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes popShockwave {
+  0% { transform: scale(0.4); opacity: 1; border-width: 4px; }
+  100% { transform: scale(3.2); opacity: 0; border-width: 1px; }
+}
+
+@keyframes popFlashCore {
+  0% { transform: scale(0.6); opacity: 1; }
+  50% { transform: scale(2.2); opacity: 0.9; }
+  100% { transform: scale(3.0); opacity: 0; }
+}
+
+@keyframes popSparkBurst {
+  0% {
+    transform: rotate(var(--spark-deg, 0deg)) translateX(0px) scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--spark-deg, 0deg)) translateX(58px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes popImplosionRing {
+  0% { transform: scale(2.4); opacity: 0; }
+  50% { opacity: 0.9; }
+  100% { transform: scale(0.15); opacity: 0; }
+}
+
+@keyframes starRespawnWarp {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+    filter: brightness(2.8);
+  }
+  65% {
+    transform: scale(1.28) rotate(15deg);
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
 }
 
 /* Spherical Glowing Celestial Body */

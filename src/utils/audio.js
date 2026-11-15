@@ -93,6 +93,69 @@ class CosmicAudioEngine {
     } catch (e) {}
   }
 
+  playSkillPopExplosion(baseFreq = 720) {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+
+      // 1. Crisp bubble pop pitch drop
+      const popOsc = this.ctx.createOscillator();
+      const popGain = this.ctx.createGain();
+      popOsc.type = 'sine';
+      popOsc.frequency.setValueAtTime(baseFreq * 1.6, now);
+      popOsc.frequency.exponentialRampToValueAtTime(75, now + 0.16);
+
+      popGain.gain.setValueAtTime(0.12, now);
+      popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+      popOsc.connect(popGain);
+      popGain.connect(this.ctx.destination);
+      popOsc.start(now);
+      popOsc.stop(now + 0.19);
+
+      // 2. High sparkle burst chime
+      [baseFreq * 2.0, baseFreq * 2.6].forEach((sf, i) => {
+        const sOsc = this.ctx.createOscillator();
+        const sGain = this.ctx.createGain();
+        sOsc.type = 'triangle';
+        sOsc.frequency.setValueAtTime(sf, now + i * 0.03);
+        sOsc.frequency.exponentialRampToValueAtTime(sf * 1.3, now + 0.22 + i * 0.03);
+
+        sGain.gain.setValueAtTime(0.04, now + i * 0.03);
+        sGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25 + i * 0.03);
+
+        sOsc.connect(sGain);
+        sGain.connect(this.ctx.destination);
+        sOsc.start(now + i * 0.03);
+        sOsc.stop(now + 0.26 + i * 0.03);
+      });
+    } catch (e) {}
+  }
+
+  playSkillRespawn(baseFreq = 720) {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // Ascending ethereal warp-in chime
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.28);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.20);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.44);
+    } catch (e) {}
+  }
+
   playLaserSound() {
     this.init();
     if (!this.ctx) return;

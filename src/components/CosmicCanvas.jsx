@@ -872,6 +872,26 @@ export default function CosmicCanvas({
     };
     window.addEventListener('planetHoverChange', handlePlanetHoverEvent);
 
+    // Custom Event Listeners for Skill Star Pop Explosion & Respawn
+    const handleSkillExplode = (e) => {
+      const { id } = e.detail || {};
+      if (id && skillNodes[id]) {
+        skillNodes[id].isExploding = true;
+        skillNodes[id].isRespawning = false;
+      }
+    };
+
+    const handleSkillRespawn = (e) => {
+      const { id } = e.detail || {};
+      if (id && skillNodes[id]) {
+        skillNodes[id].isExploding = false;
+        skillNodes[id].isRespawning = true;
+      }
+    };
+
+    window.addEventListener('skillStarExplode', handleSkillExplode);
+    window.addEventListener('skillStarRespawn', handleSkillRespawn);
+
     const handleResize = () => {
       const mob = window.innerWidth < 768;
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -944,6 +964,22 @@ export default function CosmicCanvas({
         sData.node.position.x = Math.cos(sData.angle) * sData.radius;
         sData.node.position.z = Math.sin(sData.angle) * sData.radius;
         sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset;
+
+        // Smooth 3D scale interpolation for pop explosion and respawn
+        const baseScale = sData.scale || 1.0;
+        if (sData.isExploding) {
+          sData.currentScale = (sData.currentScale ?? baseScale) * 0.72;
+          if (sData.currentScale < 0.05) sData.currentScale = 0.0001;
+        } else if (sData.isRespawning) {
+          sData.currentScale = (sData.currentScale ?? 0.0001) + (baseScale - (sData.currentScale ?? 0.0001)) * 0.16;
+          if (Math.abs(sData.currentScale - baseScale) < 0.03) {
+            sData.currentScale = baseScale;
+            sData.isRespawning = false;
+          }
+        } else {
+          sData.currentScale = baseScale;
+        }
+        sData.node.scale.set(sData.currentScale, sData.currentScale, sData.currentScale);
 
         // Animate 3D wireframe spin, rings, and satellites
         if (sData.wireMesh) sData.wireMesh.rotation.y += 0.015;
@@ -1018,12 +1054,13 @@ export default function CosmicCanvas({
         const targetPlanet = planetsData[s.currentCamTarget];
         const wp = new THREE.Vector3();
         targetPlanet.group.getWorldPosition(wp);
-        // On desktop, offset camera slightly so the active planet is framed prominently on the left side (outside the side modal)
-        const offsetX = mob ? 0 : 3.8;
+        // Desktop landscape 60:40: active planet framed centered in the left 60% cosmos viewport
+        const isLandscape = window.innerWidth >= 1024 && window.innerWidth > window.innerHeight;
+        const offsetX = mob ? 0 : (isLandscape ? 4.8 : 3.6);
         camTargetX = wp.x + (mob ? 3.0 : 4.5) + offsetX;
         camTargetY = wp.y + (mob ? 2.0 : 2.5);
         camTargetZ = wp.z + (mob ? 4.5 : 6.0);
-        lookTargetX = wp.x + offsetX * 0.72;
+        lookTargetX = wp.x + offsetX * 0.76;
         lookTargetY = wp.y - 0.2;
         lookTargetZ = wp.z;
         upX = 0;
@@ -1203,6 +1240,8 @@ export default function CosmicCanvas({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('planetHoverChange', handlePlanetHoverEvent);
+      window.removeEventListener('skillStarExplode', handleSkillExplode);
+      window.removeEventListener('skillStarRespawn', handleSkillRespawn);
       window.removeEventListener('resize', handleResize);
       document.body.style.cursor = '';
       renderer.dispose();
