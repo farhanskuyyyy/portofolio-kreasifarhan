@@ -124,11 +124,6 @@ export default function TechStackDock({ onSelectTech }) {
 
   return (
     <nav className="tech-stack-dock" id="tech-dock" aria-label="Propulsion Technology Matrix">
-      <div className="dock-title-strip">
-        <span className="dock-pip" aria-hidden="true"></span>
-        <span className="dock-label">PROPULSION TECH STACK</span>
-        <span className="dock-hint">: CLICK LOGO TO INSPECT METRICS</span>
-      </div>
       <div className="dock-chips-container">
         {techs.map((tech) => (
           <button

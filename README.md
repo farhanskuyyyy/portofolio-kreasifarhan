@@ -1,6 +1,6 @@
 # Farhan Arfianto : 3D Cosmic Spatial Portfolio
 
-Cinematic, interactive 3D spatial developer portfolio for **Farhan Arfianto** (Senior Backend and Distributed Systems Specialist at Lumoshive). Built with **React**, **Vite**, and **Three.js**.
+Cinematic, interactive 3D spatial developer portfolio for **Farhan Arfianto** (Fullstack Developer). Built with **React**, **Vite**, and **Three.js**.
 
 ---
 
