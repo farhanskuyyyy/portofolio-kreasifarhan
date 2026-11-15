@@ -29,7 +29,7 @@ export default function HudHeader({ camTarget, onSetCamTarget, onOpenContact, au
       <div className="hud-left">
         <span className="hud-beacon" aria-hidden="true"></span>
         <div className="hud-callsign">
-          <span className="callsign-code">FA // LUMOSHIVE-ENG</span>
+          <span className="callsign-code">FA // FULLSTACK-DEV</span>
           <span className="callsign-sub">JAKARTA, ID : LAT 03°44'S 119°54'E</span>
         </div>
       </div>
