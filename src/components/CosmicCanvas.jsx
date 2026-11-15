@@ -181,6 +181,9 @@ export default function CosmicCanvas({
     createRing(17.5, 0xc06c54, 0.24);
     createRing(23.0, 0xc8bfaf, 0.22);
 
+    // Planet Hit Targets for Raycaster Clicks
+    const interactiveHitObjects = [];
+
     // Planet 01: Missions
     const p1Group = new THREE.Group();
     solarPlane.add(p1Group);
@@ -188,11 +191,13 @@ export default function CosmicCanvas({
       new THREE.SphereGeometry(0.95, 20, 20),
       new THREE.MeshBasicMaterial({ color: 0xd4a373 })
     );
+    p1Core.userData = { sectorKey: 'missions' };
     p1Group.add(p1Core);
     const p1Wire = new THREE.Mesh(
       new THREE.SphereGeometry(1.2, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0xf5f2eb, wireframe: true, transparent: true, opacity: 0.35 })
     );
+    p1Wire.userData = { sectorKey: 'missions' };
     p1Group.add(p1Wire);
     const p1Ring1 = new THREE.Mesh(
       new THREE.RingGeometry(1.42, 1.48, 48),
@@ -201,6 +206,11 @@ export default function CosmicCanvas({
     p1Ring1.rotation.x = Math.PI / 2.6;
     p1Group.add(p1Ring1);
 
+    const hit1 = new THREE.Mesh(new THREE.SphereGeometry(2.8, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
+    hit1.userData = { sectorKey: 'missions' };
+    p1Group.add(hit1);
+    interactiveHitObjects.push(p1Core, p1Wire, hit1);
+
     // Planet 02: Experience / Flight Log
     const p2Group = new THREE.Group();
     solarPlane.add(p2Group);
@@ -208,11 +218,13 @@ export default function CosmicCanvas({
       new THREE.SphereGeometry(1.25, 24, 24),
       new THREE.MeshBasicMaterial({ color: 0x5aafa9 })
     );
+    p2Core.userData = { sectorKey: 'experience' };
     p2Group.add(p2Core);
     const p2Atmo = new THREE.Mesh(
       new THREE.SphereGeometry(1.36, 20, 20),
       new THREE.MeshBasicMaterial({ color: 0x89cff0, wireframe: true, transparent: true, opacity: 0.3 })
     );
+    p2Atmo.userData = { sectorKey: 'experience' };
     p2Group.add(p2Atmo);
     const p2MoonGroup = new THREE.Group();
     p2Group.add(p2MoonGroup);
@@ -223,6 +235,11 @@ export default function CosmicCanvas({
     p2Moon.position.set(2.2, 0, 0);
     p2MoonGroup.add(p2Moon);
 
+    const hit2 = new THREE.Mesh(new THREE.SphereGeometry(3.0, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
+    hit2.userData = { sectorKey: 'experience' };
+    p2Group.add(hit2);
+    interactiveHitObjects.push(p2Core, p2Atmo, hit2);
+
     // Planet 03: Systems
     const p3Group = new THREE.Group();
     solarPlane.add(p3Group);
@@ -230,6 +247,7 @@ export default function CosmicCanvas({
       new THREE.SphereGeometry(1.85, 28, 28),
       new THREE.MeshBasicMaterial({ color: 0xc06c54 })
     );
+    p3Core.userData = { sectorKey: 'systems' };
     p3Group.add(p3Core);
     const p3RingGroup = new THREE.Group();
     p3RingGroup.rotation.x = Math.PI * 0.42;
@@ -246,6 +264,11 @@ export default function CosmicCanvas({
     );
     p3RingGroup.add(p3OuterRing);
 
+    const hit3 = new THREE.Mesh(new THREE.SphereGeometry(4.2, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
+    hit3.userData = { sectorKey: 'systems' };
+    p3Group.add(hit3);
+    interactiveHitObjects.push(p3Core, hit3);
+
     // Planet 04: Relay
     const p4Group = new THREE.Group();
     solarPlane.add(p4Group);
@@ -253,12 +276,19 @@ export default function CosmicCanvas({
       new THREE.SphereGeometry(1.05, 14, 14),
       new THREE.MeshBasicMaterial({ color: 0xf5f2eb })
     );
+    p4Core.userData = { sectorKey: 'contact' };
     p4Group.add(p4Core);
     const p4Halo = new THREE.Mesh(
       new THREE.SphereGeometry(1.22, 10, 10),
       new THREE.MeshBasicMaterial({ color: 0x89cff0, wireframe: true, transparent: true, opacity: 0.45 })
     );
+    p4Halo.userData = { sectorKey: 'contact' };
     p4Group.add(p4Halo);
+
+    const hit4 = new THREE.Mesh(new THREE.SphereGeometry(2.8, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
+    hit4.userData = { sectorKey: 'contact' };
+    p4Group.add(hit4);
+    interactiveHitObjects.push(p4Core, p4Halo, hit4);
 
     const planetsData = {
       missions: { group: p1Group, radius: 6.2, speed: 0.012, angle: 1.1 },
@@ -267,13 +297,53 @@ export default function CosmicCanvas({
       contact: { group: p4Group, radius: 23.0, speed: 0.0038, angle: 2.1 },
     };
 
-    // 5. 3D Orbital Anchors for 9 Skill Stars (evenly distributed around the sun)
+    // 5. 3D Orbital Anchors for 9 Skill Stars (Planet Missions style gyro rings & satellites)
     const skillNodes = {};
     TECH_STARS.forEach((star) => {
-      const node = new THREE.Object3D();
+      const node = new THREE.Group();
       solarPlane.add(node);
+
+      const sScale = (star.scale || 1.0) * 0.9;
+      // Wireframe shell (like Planet Missions' p1Wire)
+      const wireMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(sScale * 0.95, 12, 12),
+        new THREE.MeshBasicMaterial({
+          color: 0xf5f2eb,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.25,
+        })
+      );
+      node.add(wireMesh);
+
+      // Tilted Gyro Ring 1 (like Planet Missions' p1Ring1)
+      const ring1 = new THREE.Mesh(
+        new THREE.RingGeometry(sScale * 1.25, sScale * 1.35, 36),
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(star.color),
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.45,
+        })
+      );
+      ring1.rotation.x = Math.PI / 2.6;
+      node.add(ring1);
+
+      // Orbiting Satellite Moon Group & Bead (like Planet Missions' satellite)
+      const moonGroup = new THREE.Group();
+      node.add(moonGroup);
+      const moonMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(sScale * 0.18, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      moonMesh.position.set(sScale * 1.52, 0, 0);
+      moonGroup.add(moonMesh);
+
       skillNodes[star.id] = {
         node,
+        wireMesh,
+        moonGroup,
+        moonAngle: Math.random() * Math.PI * 2,
         radius: star.orbitRadius,
         speed: star.orbitSpeed,
         angle: star.orbitAngle,
@@ -332,8 +402,44 @@ export default function CosmicCanvas({
     // Cache DOM Elements for 60FPS Transform Updates
     const domStarCache = {};
     const domFleetCache = {};
+    const domPlanetCache = {};
 
-    // 7. Input Listeners (Unbounded 360° Sumbu X & Sumbu Y)
+    // 7. Raycaster & Input Listeners (3D Interactive Planets + 360° Sumbu X & Y)
+    const raycaster = new THREE.Raycaster();
+    const mouseVector = new THREE.Vector2();
+
+    const handleCanvasClick = (e) => {
+      // Don't intercept if clicked inside dialog or button
+      if (e.target && typeof e.target.closest === 'function') {
+        if (
+          e.target.closest('dialog') ||
+          e.target.closest('button') ||
+          e.target.closest('a') ||
+          e.target.closest('.scroll-loop-hud') ||
+          e.target.closest('.scroll-hud-fab') ||
+          e.target.closest('.hero-overlay') ||
+          e.target.closest('.celestial-skill-star') ||
+          e.target.closest('.draggable-entity') ||
+          e.target.closest('.planet-floating-hud')
+        ) {
+          return;
+        }
+      }
+
+      mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseVector.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouseVector, camera);
+      const intersects = raycaster.intersectObjects(interactiveHitObjects);
+
+      if (intersects.length > 0) {
+        const sectorKey = intersects[0].object.userData.sectorKey;
+        if (onPlanetClick) {
+          audioEngine.playWarpSound();
+          onPlanetClick(sectorKey);
+        }
+      }
+    };
     const handleWheel = (e) => {
       if (e.target && typeof e.target.closest === 'function') {
         if (e.target.closest('dialog') || e.target.closest('.cockpit-modal')) return;
@@ -435,6 +541,16 @@ export default function CosmicCanvas({
     const handleMouseMove = (e) => {
       stateRef.current.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
       stateRef.current.mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+
+      mouseVector.x = stateRef.current.mouseX;
+      mouseVector.y = -stateRef.current.mouseY;
+      raycaster.setFromCamera(mouseVector, camera);
+      const intersects = raycaster.intersectObjects(interactiveHitObjects);
+      if (intersects.length > 0) {
+        document.body.style.cursor = 'pointer';
+      } else if (!e.target || !e.target.closest('.planet-floating-hud, .celestial-skill-star, button, a')) {
+        document.body.style.cursor = '';
+      }
     };
 
     const handleResize = () => {
@@ -445,6 +561,7 @@ export default function CosmicCanvas({
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
+    window.addEventListener('click', handleCanvasClick);
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -486,6 +603,13 @@ export default function CosmicCanvas({
         sData.node.position.x = Math.cos(sData.angle) * sData.radius;
         sData.node.position.z = Math.sin(sData.angle) * sData.radius;
         sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset;
+
+        // Animate 3D wireframe spin & satellite moon orbit (like Planet Missions)
+        if (sData.wireMesh) sData.wireMesh.rotation.y += 0.015;
+        if (sData.moonGroup) {
+          sData.moonAngle += 0.045;
+          sData.moonGroup.rotation.y = sData.moonAngle;
+        }
       }
 
       // Advance Fleet Dogfight Simulation Times
@@ -577,25 +701,30 @@ export default function CosmicCanvas({
 
       renderer.render(scene, camera);
 
-      // Project Planet 3D to 2D Screen Coordinates
-      if (onUpdatePlanetCoords) {
-        const coords = {};
-        for (const key in planetsData) {
-          const wp = new THREE.Vector3();
-          planetsData[key].group.getWorldPosition(wp);
-          projectVector.copy(wp).project(camera);
-
-          const isBehind = projectVector.z > 1.0;
-          const x = (projectVector.x * 0.5 + 0.5) * window.innerWidth;
-          const y = (-(projectVector.y * 0.5) + 0.5) * window.innerHeight;
-
-          coords[key] = {
-            x,
-            y,
-            visible: !isBehind && x > -50 && x < window.innerWidth + 50 && y > -50 && y < window.innerHeight + 50,
-          };
+      // Project Planet Floating HUD Markers directly to DOM Elements (Zero React re-render lag)
+      for (const key in planetsData) {
+        if (!domPlanetCache[key]) {
+          domPlanetCache[key] = document.getElementById(`planet-hud-${key}`);
         }
-        onUpdatePlanetCoords(coords);
+        const pEl = domPlanetCache[key];
+        if (!pEl) continue;
+
+        const wp = new THREE.Vector3();
+        planetsData[key].group.getWorldPosition(wp);
+        projectVector.copy(wp).project(camera);
+
+        const isBehind = projectVector.z > 1.0;
+        const x = (projectVector.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(projectVector.y * 0.5) + 0.5) * window.innerHeight;
+
+        if (isBehind || x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) {
+          pEl.style.opacity = '0';
+          pEl.style.pointerEvents = 'none';
+        } else {
+          pEl.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          pEl.style.opacity = '1';
+          pEl.style.pointerEvents = 'auto';
+        }
       }
 
       // Project Skill Stars in 3D Orbit directly to DOM Elements
@@ -722,12 +851,14 @@ export default function CosmicCanvas({
 
     return () => {
       cancelAnimationFrame(animId);
+      window.removeEventListener('click', handleCanvasClick);
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      document.body.style.cursor = '';
       renderer.dispose();
     };
   }, []);

@@ -252,12 +252,18 @@ export default function CelestialSkillStars({ onSelectTech }) {
           role="button"
           tabIndex={0}
         >
-          {/* Outer Pulsing Corona Ring */}
-          <div className="star-corona-ring" aria-hidden="true"></div>
+          {/* Dual 3D Gyro Orbit System & Satellite Probe (Planet Missions style) */}
+          <div className="skill-gyro-system" aria-hidden="true">
+            <div className="skill-orbit-track track-primary">
+              <span className="skill-satellite-bead" aria-hidden="true"></span>
+            </div>
+            <div className="skill-orbit-track track-secondary"></div>
+          </div>
 
           {/* Spherical Glowing Celestial Body */}
           <div className="star-orb-body">
             <div className="star-orb-halo" aria-hidden="true"></div>
+            <div className="star-wireframe-shell" aria-hidden="true"></div>
             <div className="star-orb-icon">{tech.svg}</div>
           </div>
 

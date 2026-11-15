@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { audioEngine } from '../../utils/audio';
 
 export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
   const [activeTab, setActiveTab] = useState('work');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -17,7 +26,15 @@ export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
   };
 
   return (
-    <dialog open className="cockpit-modal" aria-labelledby="exp-modal-title">
+    <dialog
+      id="modal-experience"
+      open
+      className="cockpit-modal"
+      aria-labelledby="exp-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="modal-window">
         <span className="hud-bracket bracket-tl" aria-hidden="true"></span>
         <span className="hud-bracket bracket-tr" aria-hidden="true"></span>

@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { audioEngine } from '../../utils/audio';
 
 export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
   const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -103,7 +112,15 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
     filter === 'all' ? projects : projects.filter((p) => p.category === filter);
 
   return (
-    <dialog open className="cockpit-modal" aria-labelledby="missions-modal-title">
+    <dialog
+      id="modal-missions"
+      open
+      className="cockpit-modal"
+      aria-labelledby="missions-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="modal-window">
         <span className="hud-bracket bracket-tl" aria-hidden="true"></span>
         <span className="hud-bracket bracket-tr" aria-hidden="true"></span>

@@ -24,7 +24,6 @@ export default function App() {
     elevationDeg: 15,
     autoOrbit: true,
   });
-  const [planetCoords, setPlanetCoords] = useState({});
   const [zoomAction, setZoomAction] = useState(null);
   const [resetViewTrigger, setResetViewTrigger] = useState(0);
 
@@ -128,7 +127,6 @@ export default function App() {
         camTarget={camTarget}
         onPlanetClick={handleOpenSector}
         onUpdateTelemetry={setTelemetry}
-        onUpdatePlanetCoords={setPlanetCoords}
         zoomAction={zoomAction}
         resetViewTrigger={resetViewTrigger}
         autoOrbitEnabled={telemetry.autoOrbit}
@@ -152,7 +150,7 @@ export default function App() {
         />
 
         <main className="spatial-viewport" id="main-content">
-          <PlanetMarkers coords={planetCoords} onSelectSector={handleOpenSector} />
+          <PlanetMarkers onSelectSector={handleOpenSector} />
           <HeroOverlay />
           <CelestialSkillStars onSelectTech={() => handleOpenSector('systems')} />
           <RadarHud

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { audioEngine } from '../../utils/audio';
 
 export default function RelayModal({ isOpen, onClose, onSwitchSector }) {
@@ -6,6 +6,15 @@ export default function RelayModal({ isOpen, onClose, onSwitchSector }) {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [formFeedback, setFormFeedback] = useState(null);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -57,7 +66,15 @@ export default function RelayModal({ isOpen, onClose, onSwitchSector }) {
   };
 
   return (
-    <dialog open className="cockpit-modal" aria-labelledby="contact-modal-title">
+    <dialog
+      id="modal-contact"
+      open
+      className="cockpit-modal"
+      aria-labelledby="contact-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="modal-window">
         <span className="hud-bracket bracket-tl" aria-hidden="true"></span>
         <span className="hud-bracket bracket-tr" aria-hidden="true"></span>
