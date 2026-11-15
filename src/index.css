@@ -3068,6 +3068,10 @@ dialog.cockpit-modal[open]::backdrop {
     bottom: 88px;
     padding: 8px 12px;
   }
+  .scroll-hud-fab {
+    right: 16px;
+    bottom: 88px;
+  }
   .scroll-hint-label { display: none; }
 }
 

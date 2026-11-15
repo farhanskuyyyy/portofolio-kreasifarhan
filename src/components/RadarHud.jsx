@@ -8,7 +8,7 @@ export default function RadarHud({
   onZoomOut,
   onToggleAutoOrbit,
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const { angle = 0, sector = 'FRONT OBLIQUE', elevationDeg = 15, autoOrbit = true } =
     telemetry || {};

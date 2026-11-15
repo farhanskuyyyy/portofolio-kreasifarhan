@@ -14,16 +14,16 @@ export default function CosmicCanvas({
 }) {
   const canvasRef = useRef(null);
   const stateRef = useRef({
-    orbitalAngle: 0,
+    orbitalAngle: 0.105,
     orbitalVelocityX: 0,
-    targetOrbitalAngle: 0,
-    elevation: 0.28,
+    targetOrbitalAngle: 0.105,
+    elevation: -0.855,
     orbitalVelocityY: 0,
-    targetElevation: 0.28,
+    targetElevation: -0.855,
     radius: 28.5,
     targetRadius: 28.5,
     autoOrbit: true,
-    camLerp: { x: 0, y: 7.5, z: 28.5, tx: 0, ty: 0, tz: 0 },
+    camLerp: { x: 1.96, y: -21.5, z: 18.6, tx: 0, ty: 0, tz: 0 },
     mouseX: 0,
     mouseY: 0,
     currentCamTarget: 'overview',
@@ -50,10 +50,9 @@ export default function CosmicCanvas({
   useEffect(() => {
     if (!resetViewTrigger) return;
     const twoPi = Math.PI * 2;
-    const currentLoopsX = Math.round(stateRef.current.orbitalAngle / twoPi);
-    const currentLoopsY = Math.round(stateRef.current.elevation / twoPi);
-    stateRef.current.targetOrbitalAngle = currentLoopsX * twoPi;
-    stateRef.current.targetElevation = currentLoopsY * twoPi + 0.28;
+    const currentLoopsX = Math.round((stateRef.current.orbitalAngle - 0.105) / twoPi);
+    stateRef.current.targetOrbitalAngle = currentLoopsX * twoPi + 0.105;
+    stateRef.current.targetElevation = -0.855;
     stateRef.current.targetRadius = window.innerWidth < 768 ? 32.5 : 28.5;
   }, [resetViewTrigger]);
 
@@ -81,7 +80,9 @@ export default function CosmicCanvas({
       0.1,
       1000
     );
-    camera.position.set(0, 7.5, stateRef.current.radius);
+    camera.up.set(0, 1, 0);
+    camera.position.set(1.96, -21.5, 18.6);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
@@ -355,18 +356,21 @@ export default function CosmicCanvas({
       const dx = e.deltaX || 0;
       const dy = e.deltaY || 0;
 
-      // Sumbu X: Unbounded Continuous Orbit
+      // Sumbu X: Unbounded Continuous Turntable Orbit (Rotates around central vertical axis)
       if (Math.abs(dx) > 0) {
         const azimuthDelta = dx * 0.0035;
         stateRef.current.orbitalVelocityX += azimuthDelta * 0.12;
         stateRef.current.targetOrbitalAngle += azimuthDelta;
       }
 
-      // Sumbu Y: Unbounded Continuous Pitch (Rotates 360° without clamp)
+      // Sumbu Y: Elevation tilt around central pivot
       if (Math.abs(dy) > 0) {
         const elevationDelta = -dy * 0.0022;
         stateRef.current.orbitalVelocityY += elevationDelta * 0.12;
-        stateRef.current.targetElevation += elevationDelta;
+        stateRef.current.targetElevation = Math.max(
+          -1.48,
+          Math.min(1.48, stateRef.current.targetElevation + elevationDelta)
+        );
       }
     };
 
@@ -406,7 +410,10 @@ export default function CosmicCanvas({
 
         const elevationDelta = deltaY * 0.0032;
         stateRef.current.orbitalVelocityY += elevationDelta * 0.14;
-        stateRef.current.targetElevation += elevationDelta;
+        stateRef.current.targetElevation = Math.max(
+          -1.48,
+          Math.min(1.48, stateRef.current.targetElevation + elevationDelta)
+        );
       } else if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -421,8 +428,8 @@ export default function CosmicCanvas({
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowRight') stateRef.current.targetOrbitalAngle += 0.2;
       else if (e.key === 'ArrowLeft') stateRef.current.targetOrbitalAngle -= 0.2;
-      else if (e.key === 'ArrowUp') stateRef.current.targetElevation += 0.15;
-      else if (e.key === 'ArrowDown') stateRef.current.targetElevation -= 0.15;
+      else if (e.key === 'ArrowUp') stateRef.current.targetElevation = Math.min(1.48, stateRef.current.targetElevation + 0.15);
+      else if (e.key === 'ArrowDown') stateRef.current.targetElevation = Math.max(-1.48, stateRef.current.targetElevation - 0.15);
       else if (e.key === '+' || e.key === '=') stateRef.current.targetRadius = Math.max(16.0, stateRef.current.targetRadius - 3.5);
       else if (e.key === '-' || e.key === '_') stateRef.current.targetRadius = Math.min(46.0, stateRef.current.targetRadius + 3.5);
     };
@@ -498,7 +505,7 @@ export default function CosmicCanvas({
       }
 
       if (Math.abs(s.orbitalVelocityY) > 0.00004) {
-        s.targetElevation += s.orbitalVelocityY;
+        s.targetElevation = Math.max(-1.48, Math.min(1.48, s.targetElevation + s.orbitalVelocityY));
         s.orbitalVelocityY *= 0.88;
       } else {
         s.orbitalVelocityY = 0;
@@ -513,7 +520,7 @@ export default function CosmicCanvas({
       s.elevation += (s.targetElevation - s.elevation) * 0.10;
       s.radius += (s.targetRadius - s.radius) * 0.12;
 
-      // Unbounded Spherical Camera Coordinates (360° X & Y Omnidirectional Orbit)
+      // Spherical Camera Coordinates centered on Sun Pivot (360° X Turntable & Y Tilt)
       const mob = window.innerWidth < 768;
       const theta = s.orbitalAngle;
       const phi = s.elevation;
@@ -529,7 +536,7 @@ export default function CosmicCanvas({
         const sinTheta = Math.sin(theta);
         const cosTheta = Math.cos(theta);
 
-        // Spherical position vector
+        // Spherical position vector around central pivot (0, 0, 0)
         camTargetX = R * cosPhi * sinTheta + s.mouseX * (mob ? 0.4 : 0.8);
         camTargetY = R * sinPhi - s.mouseY * (mob ? 0.3 : 0.6);
         camTargetZ = R * cosPhi * cosTheta;
@@ -538,10 +545,10 @@ export default function CosmicCanvas({
         lookTargetY = -s.mouseY * 0.3;
         lookTargetZ = 0;
 
-        // Exact unit-length orthogonal up-vector preventing gimbal singularities
-        upX = -sinPhi * sinTheta;
-        upY = cosPhi;
-        upZ = -sinPhi * cosTheta;
+        // Keep horizon level so Sumbu X revolves cleanly around the central vertical axis
+        upX = 0;
+        upY = 1;
+        upZ = 0;
       } else if (planetsData[s.currentCamTarget]) {
         const targetPlanet = planetsData[s.currentCamTarget];
         const wp = new THREE.Vector3();
