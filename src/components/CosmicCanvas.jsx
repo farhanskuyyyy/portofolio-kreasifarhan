@@ -17,13 +17,13 @@ export default function CosmicCanvas({
     orbitalAngle: 0.105,
     orbitalVelocityX: 0,
     targetOrbitalAngle: 0.105,
-    elevation: -0.855,
+    elevation: 0.48,
     orbitalVelocityY: 0,
-    targetElevation: -0.855,
+    targetElevation: 0.48,
     radius: 28.5,
     targetRadius: 28.5,
     autoOrbit: true,
-    camLerp: { x: 1.96, y: -21.5, z: 18.6, tx: 0, ty: 0, tz: 0 },
+    camLerp: { x: 2.65, y: 13.16, z: 25.14, tx: 0, ty: 0, tz: 0 },
     mouseX: 0,
     mouseY: 0,
     currentCamTarget: 'overview',
@@ -52,7 +52,7 @@ export default function CosmicCanvas({
     const twoPi = Math.PI * 2;
     const currentLoopsX = Math.round((stateRef.current.orbitalAngle - 0.105) / twoPi);
     stateRef.current.targetOrbitalAngle = currentLoopsX * twoPi + 0.105;
-    stateRef.current.targetElevation = -0.855;
+    stateRef.current.targetElevation = 0.48;
     stateRef.current.targetRadius = window.innerWidth < 768 ? 32.5 : 28.5;
   }, [resetViewTrigger]);
 
@@ -81,7 +81,7 @@ export default function CosmicCanvas({
       1000
     );
     camera.up.set(0, 1, 0);
-    camera.position.set(1.96, -21.5, 18.6);
+    camera.position.set(2.65, 13.16, 25.14);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -156,10 +156,8 @@ export default function CosmicCanvas({
     );
     sunGroup.add(sunCore);
 
-    // 4. Solar System Plane (Tilted towards viewer)
+    // 4. Solar System Plane (Level Reference Plane whose normal aligns with central Y axis)
     const solarPlane = new THREE.Group();
-    solarPlane.rotation.x = 0.48;
-    solarPlane.rotation.z = -0.15;
     scene.add(solarPlane);
 
     // Helper: Orbit Ring
