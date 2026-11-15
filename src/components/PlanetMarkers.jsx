@@ -7,6 +7,18 @@ export default function PlanetMarkers({ onSelectSector }) {
     if (onSelectSector) onSelectSector(sector);
   };
 
+  const handleMouseEnter = (sector) => {
+    window.dispatchEvent(
+      new CustomEvent('planetHoverChange', { detail: { sector, isHovered: true } })
+    );
+  };
+
+  const handleMouseLeave = (sector) => {
+    window.dispatchEvent(
+      new CustomEvent('planetHoverChange', { detail: { sector, isHovered: false } })
+    );
+  };
+
   const markers = [
     {
       id: 'missions',
@@ -48,6 +60,8 @@ export default function PlanetMarkers({ onSelectSector }) {
           className={`planet-floating-hud ${m.className}`}
           style={{ opacity: 0, pointerEvents: 'none' }}
           onClick={() => handleClick(m.id)}
+          onMouseEnter={() => handleMouseEnter(m.id)}
+          onMouseLeave={() => handleMouseLeave(m.id)}
           title={`Inspect ${m.index}: ${m.name}`}
         >
           <span className="hud-target-bracket bracket-left">[</span>

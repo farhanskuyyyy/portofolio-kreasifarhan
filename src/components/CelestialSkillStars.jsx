@@ -241,7 +241,7 @@ export default function CelestialSkillStars({ onSelectTech }) {
         <div
           key={tech.id}
           id={`star-${tech.id}`}
-          className={`celestial-skill-star ${activeStar === tech.id ? 'is-pulsing' : ''}`}
+          className={`celestial-skill-star star-variant-${tech.id} ${activeStar === tech.id ? 'is-pulsing' : ''}`}
           style={{
             '--star-glow': tech.color,
             '--star-glow-rgb': tech.rgb,
@@ -252,18 +252,31 @@ export default function CelestialSkillStars({ onSelectTech }) {
           role="button"
           tabIndex={0}
         >
-          {/* Dual 3D Gyro Orbit System & Satellite Probe (Planet Missions style) */}
+          {/* Distinct Gyro Orbit System & Satellite Probes tailored per tech */}
           <div className="skill-gyro-system" aria-hidden="true">
             <div className="skill-orbit-track track-primary">
-              <span className="skill-satellite-bead" aria-hidden="true"></span>
+              <span className="skill-satellite-bead bead-primary" aria-hidden="true"></span>
+              {(tech.id === 'golang' || tech.id === 'redis') && (
+                <span className="skill-satellite-bead bead-secondary" aria-hidden="true"></span>
+              )}
             </div>
             <div className="skill-orbit-track track-secondary"></div>
+            {tech.id === 'laravel' && (
+              <div className="skill-orbit-track track-tertiary"></div>
+            )}
+            {tech.id === 'grafana' && (
+              <div className="radar-sweep-beam" aria-hidden="true"></div>
+            )}
           </div>
 
-          {/* Spherical Glowing Celestial Body */}
+          {/* Celestial Body with Customized Architectural Geometry */}
           <div className="star-orb-body">
             <div className="star-orb-halo" aria-hidden="true"></div>
-            <div className="star-wireframe-shell" aria-hidden="true"></div>
+            {tech.id === 'docker' ? (
+              <div className="star-cube-shell" aria-hidden="true"></div>
+            ) : (
+              <div className="star-wireframe-shell" aria-hidden="true"></div>
+            )}
             <div className="star-orb-icon">{tech.svg}</div>
           </div>
 
