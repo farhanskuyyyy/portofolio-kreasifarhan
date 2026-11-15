@@ -22,9 +22,8 @@ export default function CosmicCanvas({
     targetElevation: 0.28,
     radius: 28.5,
     targetRadius: 28.5,
-    autoOrbit: true, // Default to true per user requirement
+    autoOrbit: true,
     camLerp: { x: 0, y: 7.5, z: 28.5, tx: 0, ty: 0, tz: 0 },
-    upLerp: { x: 0, y: 1, z: 0 },
     mouseX: 0,
     mouseY: 0,
     currentCamTarget: 'overview',
@@ -269,7 +268,7 @@ export default function CosmicCanvas({
       contact: { group: p4Group, radius: 23.0, speed: 0.0038, angle: 2.1 },
     };
 
-    // 5. Orbital Anchors for 9 Skill Stars
+    // 5. 3D Orbital Anchors for 9 Skill Stars (evenly distributed around the sun)
     const skillNodes = {};
     TECH_STARS.forEach((star) => {
       const node = new THREE.Object3D();
@@ -279,29 +278,57 @@ export default function CosmicCanvas({
         radius: star.orbitRadius,
         speed: star.orbitSpeed,
         angle: star.orbitAngle,
-        yOffset: star.yOffset,
-        yAmp: star.yAmp,
-        yFreq: star.yFreq,
-        scale: star.scale,
+        yOffset: star.yOffset || 0,
+        yAmp: star.yAmp || 0.8,
+        yFreq: star.yFreq || 1.8,
+        scale: star.scale || 1.0,
       };
     });
 
-    // 6. Orbital Anchors for Fleet Entities (3 Rockets + 3 Aliens Dogfight)
-    const fleetNodes = {
-      // Pair 1: Alien 1 & Rocket 1
-      'alien-1': { node: new THREE.Object3D(), t: 0, speed: 0.008, baseR: 13.8, yAmp: 3.2, prevX: 0, prevY: 0 },
-      'rocket-1': { node: new THREE.Object3D(), t: -0.22, speed: 0.008, baseR: 13.4, yAmp: 3.0, prevX: 0, prevY: 0 },
-      // Pair 2: Alien 2 & Rocket 2
-      'alien-2': { node: new THREE.Object3D(), t: 2.4, speed: 0.0062, baseR: 19.5, yAmp: 4.5, prevX: 0, prevY: 0 },
-      'rocket-2': { node: new THREE.Object3D(), t: 2.18, speed: 0.0062, baseR: 19.1, yAmp: 4.2, prevX: 0, prevY: 0 },
-      // Pair 3: Alien 3 & Rocket 3
-      'alien-3': { node: new THREE.Object3D(), t: 4.5, speed: 0.0075, baseR: 9.8, yAmp: 2.6, prevX: 0, prevY: 0 },
-      'rocket-3': { node: new THREE.Object3D(), t: 4.28, speed: 0.0075, baseR: 9.4, yAmp: 2.4, prevX: 0, prevY: 0 },
+    // 6. 3D Flight Simulation for Fleet Dogfight (3 Rockets pursuing 3 Aliens)
+    const fleetSim = {
+      pair1: { t: 0.0, speed: 0.0075 },
+      pair2: { t: 2.1, speed: 0.0058 },
+      pair3: { t: 4.3, speed: 0.0068 },
     };
 
-    Object.keys(fleetNodes).forEach((id) => {
-      solarPlane.add(fleetNodes[id].node);
-    });
+    const getEntityPosition = (id, time) => {
+      let x = 0, y = 0, z = 0;
+      if (id === 'alien-1') {
+        const r = 14.5 + Math.sin(time * 3.0) * 1.8;
+        x = Math.cos(time) * r;
+        z = Math.sin(time) * (r * 1.06);
+        y = Math.sin(time * 2.4) * 3.2;
+      } else if (id === 'rocket-1') {
+        const t = time - 0.22;
+        const r = 14.2 + Math.sin(t * 3.0) * 1.6;
+        x = Math.cos(t) * r;
+        z = Math.sin(t) * (r * 1.06);
+        y = Math.sin(t * 2.4) * 3.0;
+      } else if (id === 'alien-2') {
+        const r = 20.5;
+        x = Math.cos(time) * r;
+        z = Math.sin(time) * 19.0;
+        y = Math.cos(time * 2.0) * 4.2;
+      } else if (id === 'rocket-2') {
+        const t = time - 0.20;
+        x = Math.cos(t) * 20.0;
+        z = Math.sin(t) * 18.5;
+        y = Math.cos(t * 2.0) * 4.0;
+      } else if (id === 'alien-3') {
+        const r = 10.5 + Math.cos(time * 2.0) * 1.5;
+        x = Math.cos(time) * r;
+        z = Math.sin(time) * (r * 1.1);
+        y = Math.sin(time * 3.0) * 2.2;
+      } else if (id === 'rocket-3') {
+        const t = time - 0.24;
+        const r = 10.1 + Math.cos(t * 2.0) * 1.4;
+        x = Math.cos(t) * r;
+        z = Math.sin(t) * (r * 1.1);
+        y = Math.sin(t * 3.0) * 2.0;
+      }
+      return { x, y, z };
+    };
 
     // Cache DOM Elements for 60FPS Transform Updates
     const domStarCache = {};
@@ -337,7 +364,7 @@ export default function CosmicCanvas({
 
       // Sumbu Y: Unbounded Continuous Pitch (Rotates 360° without clamp)
       if (Math.abs(dy) > 0) {
-        const elevationDelta = -dy * 0.0024;
+        const elevationDelta = -dy * 0.0022;
         stateRef.current.orbitalVelocityY += elevationDelta * 0.12;
         stateRef.current.targetElevation += elevationDelta;
       }
@@ -377,7 +404,7 @@ export default function CosmicCanvas({
         stateRef.current.orbitalVelocityX += azimuthDelta * 0.14;
         stateRef.current.targetOrbitalAngle += azimuthDelta;
 
-        const elevationDelta = deltaY * 0.0035;
+        const elevationDelta = deltaY * 0.0032;
         stateRef.current.orbitalVelocityY += elevationDelta * 0.14;
         stateRef.current.targetElevation += elevationDelta;
       } else if (e.touches.length === 2) {
@@ -423,6 +450,8 @@ export default function CosmicCanvas({
     // 8. Animation Loop
     const projectVector = new THREE.Vector3();
     const tempWorldPos = new THREE.Vector3();
+    const tempAheadPos = new THREE.Vector3();
+    const pAheadProj = new THREE.Vector3();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -454,14 +483,10 @@ export default function CosmicCanvas({
         sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset;
       }
 
-      // Update Fleet 3D Positions in Orbit (Dogfight Trajectories)
-      for (const id in fleetNodes) {
-        const f = fleetNodes[id];
-        f.t += f.speed;
-        f.node.position.x = Math.cos(f.t) * f.baseR;
-        f.node.position.z = Math.sin(f.t) * (f.baseR * 1.08);
-        f.node.position.y = Math.sin(f.t * 2.5) * f.yAmp;
-      }
+      // Advance Fleet Dogfight Simulation Times
+      fleetSim.pair1.t += fleetSim.pair1.speed;
+      fleetSim.pair2.t += fleetSim.pair2.speed;
+      fleetSim.pair3.t += fleetSim.pair3.speed;
 
       // Physics momentum damping
       const s = stateRef.current;
@@ -484,8 +509,8 @@ export default function CosmicCanvas({
       }
 
       // Smooth interpolation
-      s.orbitalAngle += (s.targetOrbitalAngle - s.orbitalAngle) * 0.1;
-      s.elevation += (s.targetElevation - s.elevation) * 0.1;
+      s.orbitalAngle += (s.targetOrbitalAngle - s.orbitalAngle) * 0.10;
+      s.elevation += (s.targetElevation - s.elevation) * 0.10;
       s.radius += (s.targetRadius - s.radius) * 0.12;
 
       // Unbounded Spherical Camera Coordinates (360° X & Y Omnidirectional Orbit)
@@ -513,7 +538,7 @@ export default function CosmicCanvas({
         lookTargetY = -s.mouseY * 0.3;
         lookTargetZ = 0;
 
-        // Smooth orthogonal up-vector preventing gimbal singularities
+        // Exact unit-length orthogonal up-vector preventing gimbal singularities
         upX = -sinPhi * sinTheta;
         upY = cosPhi;
         upZ = -sinPhi * cosTheta;
@@ -540,11 +565,8 @@ export default function CosmicCanvas({
       s.camLerp.ty += (lookTargetY - s.camLerp.ty) * lerpSpeed;
       s.camLerp.tz += (lookTargetZ - s.camLerp.tz) * lerpSpeed;
 
-      s.upLerp.x += (upX - s.upLerp.x) * lerpSpeed;
-      s.upLerp.y += (upY - s.upLerp.y) * lerpSpeed;
-      s.upLerp.z += (upZ - s.upLerp.z) * lerpSpeed;
-
-      camera.up.set(s.upLerp.x, s.upLerp.y, s.upLerp.z);
+      // Always set pure unit length up vector directly to avoid zero-vector lerp singularities
+      camera.up.set(upX, upY, upZ);
       camera.position.set(s.camLerp.x, s.camLerp.y, s.camLerp.z);
       camera.lookAt(s.camLerp.tx, s.camLerp.ty, s.camLerp.tz);
 
@@ -585,75 +607,86 @@ export default function CosmicCanvas({
         const dist = tempWorldPos.distanceTo(camPos);
         projectVector.copy(tempWorldPos).project(camera);
 
-        const isBehind = projectVector.z > 1.0;
+        const isBehindLens = projectVector.z > 1.0;
         const sx = (projectVector.x * 0.5 + 0.5) * window.innerWidth;
         const sy = (-(projectVector.y * 0.5) + 0.5) * window.innerHeight;
-        const inBounds = sx >= -80 && sx <= window.innerWidth + 80 && sy >= -80 && sy <= window.innerHeight + 80;
 
-        if (isBehind || !inBounds) {
+        if (isBehindLens) {
           el.style.opacity = '0';
           el.style.pointerEvents = 'none';
         } else {
           // Perspective depth scaling (near = larger, far = smaller)
-          const depthFactor = Math.max(0.68, Math.min(1.28, 28 / dist));
-          const finalScale = (sData.scale || 1.0) * depthFactor * (mob ? 0.72 : 1.0);
-          el.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%) scale(${finalScale.toFixed(3)})`;
-          // Modulate brightness/opacity smoothly with distance
-          const depthFade = Math.max(0.35, Math.min(1.0, 1.4 - dist / 50));
+          const depthFactor = Math.max(0.72, Math.min(1.28, 28 / dist));
+          const finalScale = (sData.scale || 1.0) * depthFactor * (mob ? 0.75 : 1.0);
+          el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -50%) scale(${finalScale.toFixed(3)})`;
+          
+          // Foreground is 1.0, background stays nicely visible (0.60)
+          const depthFade = Math.max(0.60, Math.min(1.0, 1.4 - dist / 55));
           el.style.opacity = depthFade.toFixed(2);
           el.style.pointerEvents = 'auto';
         }
       }
 
-      // Project Fleet Entities (Rockets & Aliens) in 3D Orbit directly to DOM Elements
-      for (const id in fleetNodes) {
+      // Project Fleet Entities (Rockets & Aliens) with Smooth Projected 3D Headings
+      const fleetEntitiesList = [
+        { id: 'alien-1', sim: fleetSim.pair1, isRocket: false },
+        { id: 'rocket-1', sim: fleetSim.pair1, isRocket: true },
+        { id: 'alien-2', sim: fleetSim.pair2, isRocket: false },
+        { id: 'rocket-2', sim: fleetSim.pair2, isRocket: true },
+        { id: 'alien-3', sim: fleetSim.pair3, isRocket: false },
+        { id: 'rocket-3', sim: fleetSim.pair3, isRocket: true },
+      ];
+
+      fleetEntitiesList.forEach(({ id, sim, isRocket }) => {
         if (!domFleetCache[id]) {
           domFleetCache[id] = document.getElementById(id);
         }
         const fEl = domFleetCache[id];
-        if (!fEl) continue;
+        if (!fEl) return;
 
         // Skip positioning if currently being dragged
-        if (fEl.classList.contains('is-dragged')) continue;
+        if (fEl.classList.contains('is-dragged')) return;
 
-        const f = fleetNodes[id];
-        f.node.getWorldPosition(tempWorldPos);
+        // Calculate 3D position in solarPlane
+        const posLocal = getEntityPosition(id, sim.t);
+        tempWorldPos.set(posLocal.x, posLocal.y, posLocal.z);
+        solarPlane.localToWorld(tempWorldPos);
+
         const dist = tempWorldPos.distanceTo(camPos);
         projectVector.copy(tempWorldPos).project(camera);
 
-        const isBehind = projectVector.z > 1.0;
+        const isBehindLens = projectVector.z > 1.0;
         const fx = (projectVector.x * 0.5 + 0.5) * window.innerWidth;
         const fy = (-(projectVector.y * 0.5) + 0.5) * window.innerHeight;
-        const inBounds = fx >= -120 && fx <= window.innerWidth + 120 && fy >= -120 && fy <= window.innerHeight + 120;
 
-        if (isBehind || !inBounds) {
+        if (isBehindLens) {
           fEl.style.opacity = '0';
           fEl.style.pointerEvents = 'none';
         } else {
-          // Dynamic heading angle calculated from instantaneous screen delta
-          let headingDeg = 0;
-          if (f.prevX !== 0 && f.prevY !== 0) {
-            const dScreenX = fx - f.prevX;
-            const dScreenY = fy - f.prevY;
-            if (dScreenX * dScreenX + dScreenY * dScreenY > 0.05) {
-              // Rocket noses point up by default (offset 90deg), Aliens point forward
-              const isRocket = id.startsWith('rocket');
-              const baseAngle = Math.atan2(dScreenY, dScreenX) * (180 / Math.PI);
-              headingDeg = isRocket ? baseAngle + 90 : baseAngle;
-            }
-          }
-          f.prevX = fx;
-          f.prevY = fy;
+          // Analytical heading from projected future point along trajectory (Zero camera jitter!)
+          const posAhead = getEntityPosition(id, sim.t + 0.06);
+          tempAheadPos.set(posAhead.x, posAhead.y, posAhead.z);
+          solarPlane.localToWorld(tempAheadPos);
+          pAheadProj.copy(tempAheadPos).project(camera);
 
-          const depthFactor = Math.max(0.65, Math.min(1.3, 28 / dist));
-          const mobFactor = mob ? 0.6 : 1.0;
+          const fxAhead = (pAheadProj.x * 0.5 + 0.5) * window.innerWidth;
+          const fyAhead = (-(pAheadProj.y * 0.5) + 0.5) * window.innerHeight;
+
+          const dx = fxAhead - fx;
+          const dy = fyAhead - fy;
+          const baseAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+          // Rockets point UP by default in CSS (+90deg offset), Aliens point forward
+          const headingDeg = isRocket ? baseAngle + 90 : baseAngle;
+
+          const depthFactor = Math.max(0.70, Math.min(1.25, 28 / dist));
+          const mobFactor = mob ? 0.65 : 1.05;
           const finalScale = depthFactor * mobFactor;
 
-          fEl.style.transform = `translate3d(${fx}px, ${fy}px, 0) translate(-50%, -50%) rotate(${headingDeg.toFixed(1)}deg) scale(${finalScale.toFixed(3)})`;
+          fEl.style.transform = `translate3d(${fx.toFixed(1)}px, ${fy.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${headingDeg.toFixed(1)}deg) scale(${finalScale.toFixed(3)})`;
           fEl.style.opacity = '1';
           fEl.style.pointerEvents = 'auto';
         }
-      }
+      });
 
       // Update Telemetry Callbacks (Full 360° Omnidirectional Readouts)
       if (onUpdateTelemetry) {

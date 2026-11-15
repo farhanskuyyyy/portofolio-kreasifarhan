@@ -367,13 +367,7 @@ html, body {
 .alien-tendril.t2 { left: 21px; height: 12px; }
 .alien-tendril.t3 { left: 28px; transform: rotate(15deg); }
 
-/* Initial Coordinates & 100% STRAIGHT Flight Trajectories (Lurus Sempurna, Beda Jalur) */
-#rocket-1 { top: 16vh; left: -160px; }
-#rocket-2 { top: 56vh; left: calc(100vw + 160px); }
-#rocket-3 { top: calc(100vh + 120px); left: 28vw; }
-#alien-1  { top: -140px; left: 74vw; }
-#alien-2  { top: 82vh; left: -140px; }
-#alien-3  { top: -130px; left: 8vw; }
+/* Initial coordinates managed in 3D orbit */
 
 /* --------------------------------------------------------------------------
    Dogfight Dynamic Curvilinear Flight Trajectories (Belok & Bank Maneuvers)
@@ -3322,10 +3316,7 @@ dialog.cockpit-modal[open]::backdrop {
   z-index: 40;
 }
 
-.celestial-skill-star:hover {
-  transform: scale(1.18);
-  z-index: 30;
-}
+/* Star hover transform scale removed to prevent snap */
 
 .celestial-skill-star.is-pulsing {
   animation: starPulseClick 0.6s ease-out;
@@ -3343,16 +3334,22 @@ dialog.cockpit-modal[open]::backdrop {
   width: calc(44px * var(--star-mastery-scale, 1));
   height: calc(44px * var(--star-mastery-scale, 1));
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.22) 0%, rgba(16, 20, 26, 0.94) 70%);
+  background: radial-gradient(circle at 32% 32%, rgba(255, 255, 255, 0.45) 0%, rgba(var(--star-glow-rgb), 0.65) 35%, rgba(12, 15, 20, 0.95) 85%);
   border: 1.5px solid var(--star-glow, #d4a373);
-  box-shadow: 0 0 calc(18px * var(--star-mastery-scale, 1)) rgba(var(--star-glow-rgb), 0.55),
-              inset 0 0 12px rgba(var(--star-glow-rgb), 0.35);
+  box-shadow: 0 0 calc(20px * var(--star-mastery-scale, 1)) rgba(var(--star-glow-rgb), 0.75),
+              inset 0 0 14px rgba(var(--star-glow-rgb), 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.celestial-skill-star:hover .star-orb-body {
+  transform: scale(1.15);
+  box-shadow: 0 0 32px rgba(var(--star-glow-rgb), 0.95), inset 0 0 18px rgba(var(--star-glow-rgb), 0.65);
+  border-color: #FFFFFF;
 }
 
 .celestial-skill-star:hover .star-orb-body {
@@ -3492,10 +3489,7 @@ dialog.cockpit-modal[open]::backdrop {
 
 /* Mobile Viewport Adaptation */
 @media (max-width: 768px) {
-  .celestial-skill-star {
-    left: var(--star-pos-left-mob);
-    top: var(--star-pos-top-mob);
-  }
+  /* 3D positioned */
 
   .star-orb-body {
     width: 34px;
