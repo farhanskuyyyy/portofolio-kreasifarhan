@@ -25,6 +25,7 @@ export default function CosmicCanvas({
     autoOrbit: true,
     hoveredPlanet: null,
     hoveredViaDom: false,
+    lastDragDistance: 0,
     camLerp: { x: 2.65, y: 13.16, z: 25.14, tx: 0, ty: 0, tz: 0 },
     mouseX: 0,
     mouseY: 0,
@@ -42,9 +43,9 @@ export default function CosmicCanvas({
   useEffect(() => {
     if (!zoomAction) return;
     if (zoomAction === 'in') {
-      stateRef.current.targetRadius = Math.max(16.0, stateRef.current.targetRadius - 4.5);
+      stateRef.current.targetRadius = Math.max(13.5, stateRef.current.targetRadius - 4.5);
     } else if (zoomAction === 'out') {
-      stateRef.current.targetRadius = Math.min(46.0, stateRef.current.targetRadius + 4.5);
+      stateRef.current.targetRadius = Math.min(48.0, stateRef.current.targetRadius + 4.5);
     }
   }, [zoomAction]);
 
@@ -77,7 +78,7 @@ export default function CosmicCanvas({
     scene.fog = new THREE.FogExp2(0x0a0c10, 0.007);
 
     const camera = new THREE.PerspectiveCamera(
-      isMobile ? 58 : 45,
+      isMobile ? 58 : 54,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
@@ -94,6 +95,18 @@ export default function CosmicCanvas({
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Three-point ambient lighting for 3D PBR materials
+    const ambientLight = new THREE.AmbientLight(0x282c34, 1.4);
+    scene.add(ambientLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
+    rimLight.position.set(-25, 18, -20);
+    scene.add(rimLight);
+
+    const warmFill = new THREE.DirectionalLight(0xd4a373, 0.8);
+    warmFill.position.set(20, -12, 22);
+    scene.add(warmFill);
 
     // 2. Stars Field
     const starCount = 2800;
@@ -138,31 +151,159 @@ export default function CosmicCanvas({
     const starPoints = new THREE.Points(starGeo, starMat);
     scene.add(starPoints);
 
-    // 3. Central Sun Core
-    const sunGroup = new THREE.Group();
-    scene.add(sunGroup);
-
-    const sunGeo = new THREE.IcosahedronGeometry(3.2, 3);
-    const sunMat = new THREE.MeshBasicMaterial({
-      color: 0xd4a373,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.45,
-    });
-    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
-    sunGroup.add(sunMesh);
-
-    const sunCore = new THREE.Mesh(
-      new THREE.SphereGeometry(1.6, 24, 24),
-      new THREE.MeshBasicMaterial({ color: 0xd4a373, transparent: true, opacity: 0.3 })
-    );
-    sunGroup.add(sunCore);
-
-    // 4. Solar System Plane (Level Reference Plane whose normal aligns with central Y axis)
+    // 3. Central Gargantua Black Hole Singularity & Accretion Disk
     const solarPlane = new THREE.Group();
     scene.add(solarPlane);
 
-    // Helper: Orbit Ring
+    function createRadialGlowTexture(colorCenter, colorMid, colorEdge) {
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
+      grad.addColorStop(0.0, colorCenter);
+      grad.addColorStop(0.38, colorMid);
+      grad.addColorStop(1.0, colorEdge);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const gargantuaGroup = new THREE.Group();
+    solarPlane.add(gargantuaGroup);
+
+    // Event Horizon (Pitch Black Singularity Core)
+    const horizonGeo = new THREE.SphereGeometry(2.35, 48, 48);
+    const horizonMat = new THREE.MeshBasicMaterial({ color: 0x020305 });
+    const horizonMesh = new THREE.Mesh(horizonGeo, horizonMat);
+    gargantuaGroup.add(horizonMesh);
+
+    // Relativistic Photon Ring
+    const photonGeo = new THREE.SphereGeometry(2.46, 36, 36);
+    const photonMat = new THREE.MeshBasicMaterial({
+      color: 0xfff3d1,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.AdditiveBlending,
+    });
+    const gargantuaCorona = new THREE.Mesh(photonGeo, photonMat);
+    gargantuaGroup.add(gargantuaCorona);
+
+    // Soft Atmospheric Solar Glow Sprite
+    const glowTex = createRadialGlowTexture(
+      'rgba(255, 235, 190, 0.9)',
+      'rgba(212, 163, 115, 0.42)',
+      'rgba(16, 18, 22, 0.0)'
+    );
+    const glowSpriteMat = new THREE.SpriteMaterial({
+      map: glowTex,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const glowSprite = new THREE.Sprite(glowSpriteMat);
+    glowSprite.scale.set(11.5, 11.5, 1.0);
+    gargantuaGroup.add(glowSprite);
+
+    // Primary Horizontal Accretion Disk
+    const gargantuaDiskGroup = new THREE.Group();
+    gargantuaDiskGroup.rotation.x = 0.08;
+    gargantuaDiskGroup.rotation.z = -0.06;
+    gargantuaGroup.add(gargantuaDiskGroup);
+
+    const diskLayers = [
+      { inner: 2.55, outer: 3.15, color: 0xfff8e7, opacity: 0.88 },
+      { inner: 3.10, outer: 4.10, color: 0xe0a96d, opacity: 0.65 },
+      { inner: 4.05, outer: 5.15, color: 0xc06c54, opacity: 0.35 },
+      { inner: 5.10, outer: 5.75, color: 0xd4a373, opacity: 0.16 },
+    ];
+    diskLayers.forEach((layer) => {
+      const rGeo = new THREE.RingGeometry(layer.inner, layer.outer, 96);
+      const rMat = new THREE.MeshBasicMaterial({
+        color: layer.color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: layer.opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const rMesh = new THREE.Mesh(rGeo, rMat);
+      rMesh.rotation.x = Math.PI / 2;
+      gargantuaDiskGroup.add(rMesh);
+    });
+
+    // 900 Swirling Accretion Plasma Particles
+    const pCount = 900;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(pCount * 3);
+    const pCol = new Float32Array(pCount * 3);
+    const cHot = new THREE.Color(0xfff9e6);
+    const cWarm = new THREE.Color(0xd4a373);
+    const cDeep = new THREE.Color(0xc06c54);
+
+    for (let i = 0; i < pCount; i++) {
+      const i3 = i * 3;
+      const a = Math.random() * Math.PI * 2;
+      const dist = 2.6 + Math.pow(Math.random(), 1.5) * 3.1;
+      pPos[i3] = Math.cos(a) * dist;
+      pPos[i3 + 1] = (Math.random() - 0.5) * 0.18 * (6.0 - dist) * 0.4;
+      pPos[i3 + 2] = Math.sin(a) * dist;
+
+      const t = (dist - 2.6) / 3.1;
+      const col = t < 0.3 ? cHot : t < 0.7 ? cWarm : cDeep;
+      pCol[i3] = col.r;
+      pCol[i3 + 1] = col.g;
+      pCol[i3 + 2] = col.b;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+    const pMat = new THREE.PointsMaterial({
+      size: 0.11,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const diskParticles = new THREE.Points(pGeo, pMat);
+    gargantuaDiskGroup.add(diskParticles);
+
+    // Gravitational Lensing Halo (Bent Light Arc)
+    const gargantuaLensingRing = new THREE.Group();
+    gargantuaGroup.add(gargantuaLensingRing);
+
+    const lensOuter = new THREE.Mesh(
+      new THREE.TorusGeometry(2.68, 0.11, 20, 100),
+      new THREE.MeshBasicMaterial({
+        color: 0xffe8b8,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    lensOuter.rotation.x = 0.22;
+    gargantuaLensingRing.add(lensOuter);
+
+    const lensHalo = new THREE.Mesh(
+      new THREE.RingGeometry(2.58, 3.25, 84),
+      new THREE.MeshBasicMaterial({
+        color: 0xd4a373,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    lensHalo.rotation.x = 0.18;
+    gargantuaLensingRing.add(lensHalo);
+
+    // Central Point Light from Singularity
+    const sunLight = new THREE.PointLight(0xffe4b5, 4.8, 120);
+    gargantuaGroup.add(sunLight);
+
+    // 4. Concentric Orbit Rings & Asteroid Belt
     const createRing = (radius, colorHex, opacity) => {
       const ringGeo = new THREE.RingGeometry(radius - 0.03, radius + 0.03, 128);
       const ringMat = new THREE.MeshBasicMaterial({
@@ -177,179 +318,287 @@ export default function CosmicCanvas({
       return mesh;
     };
 
-    // Orbit Rings
-    createRing(6.2, 0xd4a373, 0.28);
-    createRing(10.4, 0x5aafa9, 0.26);
-    createRing(17.5, 0xc06c54, 0.24);
-    createRing(23.0, 0xc8bfaf, 0.22);
+    createRing(6.6, 0xd4a373, 0.36); // Orbit 1: Missions
+    createRing(10.6, 0x5aafa9, 0.32); // Orbit 2: Flight Log
+    createRing(17.5, 0xc8bfaf, 0.28); // Orbit 3: Core Systems
+    createRing(23.0, 0xf5f2eb, 0.24); // Orbit 4: Relay
 
-    // Planet Hit Targets for Raycaster Clicks
+    // Asteroid Belt between Orbit 2 and Orbit 3
+    const createAsteroidBelt = (parent, centerRadius, count) => {
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const angle = Math.random() * Math.PI * 2;
+        const r = centerRadius + (Math.random() - 0.5) * 1.4;
+        pos[i3] = Math.cos(angle) * r;
+        pos[i3 + 1] = (Math.random() - 0.5) * 0.4;
+        pos[i3 + 2] = Math.sin(angle) * r;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.09,
+        color: 0xc8bfaf,
+        transparent: true,
+        opacity: 0.5,
+      });
+      const pts = new THREE.Points(geo, mat);
+      parent.add(pts);
+      return pts;
+    };
+    createAsteroidBelt(solarPlane, 13.6, 360);
+
+    // Inner Scout Probe & Orbit Ring
+    createRing(5.85, 0xd4a373, 0.22);
+    const scoutGroup = new THREE.Group();
+    solarPlane.add(scoutGroup);
+    const scoutMesh = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.25, 0),
+      new THREE.MeshBasicMaterial({ color: 0xfff3d1 })
+    );
+    scoutGroup.add(scoutMesh);
+    const scoutData = {
+      group: scoutGroup,
+      radius: 5.85,
+      speed: 0.022,
+      angle: 0.5,
+    };
+
+    // 5. Four Differentiated Interactive Revolving Planets with 3D Shading
     const interactiveHitObjects = [];
 
-    // Planet 01: Missions
+    // Planet 01: Missions & Architecture ("Miller's Water World")
     const p1Group = new THREE.Group();
     solarPlane.add(p1Group);
-    const p1Core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.95, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0xd4a373 })
-    );
-    p1Core.userData = { sectorKey: 'missions' };
+
+    const p1CoreGeo = new THREE.SphereGeometry(1.05, 32, 32);
+    const p1CoreMat = new THREE.MeshStandardMaterial({
+      color: 0x1e6b7b,
+      emissive: 0x0b2d39,
+      roughness: 0.22,
+      metalness: 0.35,
+    });
+    const p1Core = new THREE.Mesh(p1CoreGeo, p1CoreMat);
     p1Group.add(p1Core);
-    const p1Wire = new THREE.Mesh(
-      new THREE.SphereGeometry(1.2, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xf5f2eb, wireframe: true, transparent: true, opacity: 0.35 })
-    );
-    p1Wire.userData = { sectorKey: 'missions' };
+
+    const p1WireGeo = new THREE.IcosahedronGeometry(1.26, 1);
+    const p1WireMat = new THREE.MeshBasicMaterial({
+      color: 0xd4a373,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.42,
+    });
+    const p1Wire = new THREE.Mesh(p1WireGeo, p1WireMat);
     p1Group.add(p1Wire);
+
     const p1Ring1 = new THREE.Mesh(
-      new THREE.RingGeometry(1.42, 1.48, 48),
-      new THREE.MeshBasicMaterial({ color: 0xd4a373, side: THREE.DoubleSide, transparent: true, opacity: 0.45 })
+      new THREE.TorusGeometry(1.55, 0.032, 12, 64),
+      new THREE.MeshBasicMaterial({ color: 0xd4a373, transparent: true, opacity: 0.75 })
     );
-    p1Ring1.rotation.x = Math.PI / 2.6;
+    p1Ring1.rotation.x = Math.PI / 2.4;
     p1Group.add(p1Ring1);
 
     const p1Ring2 = new THREE.Mesh(
-      new THREE.RingGeometry(1.58, 1.64, 48),
-      new THREE.MeshBasicMaterial({ color: 0xc8bfaf, side: THREE.DoubleSide, transparent: true, opacity: 0.35 })
+      new THREE.TorusGeometry(1.78, 0.022, 12, 64),
+      new THREE.MeshBasicMaterial({ color: 0x70a9a1, transparent: true, opacity: 0.55 })
     );
-    p1Ring2.rotation.y = Math.PI / 2.2;
+    p1Ring2.rotation.y = Math.PI / 2.1;
     p1Group.add(p1Ring2);
 
-    // Orbiting Satellite Probe (Revolves around P-01)
     const p1ProbeGroup = new THREE.Group();
     p1Group.add(p1ProbeGroup);
     const p1Probe = new THREE.Mesh(
-      new THREE.SphereGeometry(0.24, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
+      new THREE.OctahedronGeometry(0.24, 0),
+      new THREE.MeshBasicMaterial({ color: 0xfff8e7 })
     );
-    p1Probe.position.set(1.95, 0, 0);
+    p1Probe.position.set(2.05, 0.2, 0);
     p1ProbeGroup.add(p1Probe);
 
-    const hit1 = new THREE.Mesh(new THREE.SphereGeometry(2.8, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
-    hit1.userData = { sectorKey: 'missions' };
+    const hit1 = new THREE.Mesh(
+      new THREE.SphereGeometry(2.9, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false })
+    );
+    hit1.userData = { sectorKey: 'missions', label: 'P-01 // MISSIONS & ARCHITECTURE' };
+    p1Core.userData = { sectorKey: 'missions', label: 'P-01 // MISSIONS & ARCHITECTURE' };
     p1Group.add(hit1);
-    interactiveHitObjects.push(p1Core, p1Wire, hit1);
+    interactiveHitObjects.push(hit1, p1Core);
 
-    // Planet 02: Experience / Flight Log
+    // Planet 02: Flight Log & Credentials ("Mann's Frozen World")
     const p2Group = new THREE.Group();
     solarPlane.add(p2Group);
-    const p2Core = new THREE.Mesh(
-      new THREE.SphereGeometry(1.25, 24, 24),
-      new THREE.MeshBasicMaterial({ color: 0x5aafa9 })
-    );
-    p2Core.userData = { sectorKey: 'experience' };
+
+    const p2CoreGeo = new THREE.IcosahedronGeometry(1.32, 2);
+    const p2CoreMat = new THREE.MeshStandardMaterial({
+      color: 0x5aafa9,
+      emissive: 0x16383b,
+      roughness: 0.35,
+      metalness: 0.2,
+      flatShading: true,
+    });
+    const p2Core = new THREE.Mesh(p2CoreGeo, p2CoreMat);
     p2Group.add(p2Core);
+
     const p2Atmo = new THREE.Mesh(
-      new THREE.SphereGeometry(1.36, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0x89cff0, wireframe: true, transparent: true, opacity: 0.3 })
+      new THREE.SphereGeometry(1.46, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0xa5f3fc, wireframe: true, transparent: true, opacity: 0.25 })
     );
-    p2Atmo.userData = { sectorKey: 'experience' };
     p2Group.add(p2Atmo);
 
-    // Orbiting Moon System (Primary Moon + Sensor Satellite)
-    const p2MoonGroup = new THREE.Group();
-    p2Group.add(p2MoonGroup);
-    const p2Moon = new THREE.Mesh(
-      new THREE.SphereGeometry(0.36, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0xc8bfaf })
+    const p2MoonOrbitGroup = new THREE.Group();
+    p2Group.add(p2MoonOrbitGroup);
+
+    const p2IceRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.9, 2.35, 6),
+      new THREE.MeshBasicMaterial({ color: 0x89cff0, side: THREE.DoubleSide, transparent: true, opacity: 0.28 })
     );
-    p2Moon.position.set(2.2, 0, 0);
-    p2MoonGroup.add(p2Moon);
+    p2IceRing.rotation.x = Math.PI / 2.6;
+    p2MoonOrbitGroup.add(p2IceRing);
+
+    const p2Moon = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.38, 0),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5, flatShading: true })
+    );
+    p2Moon.position.set(2.45, 0.25, 0);
+    p2MoonOrbitGroup.add(p2Moon);
 
     const p2Probe = new THREE.Mesh(
-      new THREE.SphereGeometry(0.16, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0x89cff0 })
+      new THREE.OctahedronGeometry(0.22, 0),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
     );
-    p2Probe.position.set(-1.75, 0.35, 0);
-    p2MoonGroup.add(p2Probe);
+    p2Probe.position.set(-1.95, -0.2, 0);
+    p2MoonOrbitGroup.add(p2Probe);
 
-    const hit2 = new THREE.Mesh(new THREE.SphereGeometry(3.0, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
-    hit2.userData = { sectorKey: 'experience' };
+    const hit2 = new THREE.Mesh(
+      new THREE.SphereGeometry(3.1, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false })
+    );
+    hit2.userData = { sectorKey: 'experience', label: 'P-02 // FLIGHT LOG & CREDENTIALS' };
+    p2Core.userData = { sectorKey: 'experience', label: 'P-02 // FLIGHT LOG & CREDENTIALS' };
     p2Group.add(hit2);
-    interactiveHitObjects.push(p2Core, p2Atmo, hit2);
+    interactiveHitObjects.push(hit2, p2Core);
 
-    // Planet 03: Systems
+    // Planet 03: Core Systems & Stack ("Edmunds Ringed Giant")
     const p3Group = new THREE.Group();
     solarPlane.add(p3Group);
-    const p3Core = new THREE.Mesh(
-      new THREE.SphereGeometry(1.85, 28, 28),
-      new THREE.MeshBasicMaterial({ color: 0xc06c54 })
-    );
-    p3Core.userData = { sectorKey: 'systems' };
-    p3Group.add(p3Core);
-    const p3RingGroup = new THREE.Group();
-    p3RingGroup.rotation.x = Math.PI * 0.42;
-    p3RingGroup.rotation.y = 0.18;
-    p3Group.add(p3RingGroup);
-    const p3InnerRing = new THREE.Mesh(
-      new THREE.RingGeometry(2.4, 3.2, 64),
-      new THREE.MeshBasicMaterial({ color: 0xd4a373, side: THREE.DoubleSide, transparent: true, opacity: 0.48 })
-    );
-    p3RingGroup.add(p3InnerRing);
-    const p3OuterRing = new THREE.Mesh(
-      new THREE.RingGeometry(3.45, 4.8, 64),
-      new THREE.MeshBasicMaterial({ color: 0xc8bfaf, side: THREE.DoubleSide, transparent: true, opacity: 0.32 })
-    );
-    p3RingGroup.add(p3OuterRing);
 
-    // Orbiting Shepherd Moons revolving around ring system
+    const p3CoreGeo = new THREE.SphereGeometry(1.9, 36, 36);
+    const p3CoreMat = new THREE.MeshStandardMaterial({
+      color: 0xc06c54,
+      emissive: 0x3a1b14,
+      roughness: 0.45,
+      metalness: 0.15,
+    });
+    const p3Core = new THREE.Mesh(p3CoreGeo, p3CoreMat);
+    p3Group.add(p3Core);
+
+    const p3BandMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1.98, 28, 10),
+      new THREE.MeshBasicMaterial({ color: 0xd4a373, wireframe: true, transparent: true, opacity: 0.32 })
+    );
+    p3Group.add(p3BandMesh);
+
+    const p3RingGroup = new THREE.Group();
+    p3RingGroup.rotation.x = Math.PI * 0.41;
+    p3RingGroup.rotation.y = 0.22;
+    p3Group.add(p3RingGroup);
+
+    const p3R1 = new THREE.Mesh(
+      new THREE.RingGeometry(2.35, 3.05, 84),
+      new THREE.MeshBasicMaterial({ color: 0xd4a373, side: THREE.DoubleSide, transparent: true, opacity: 0.62 })
+    );
+    const p3R2 = new THREE.Mesh(
+      new THREE.RingGeometry(3.22, 4.35, 84),
+      new THREE.MeshBasicMaterial({ color: 0xc8bfaf, side: THREE.DoubleSide, transparent: true, opacity: 0.38 })
+    );
+    const p3R3 = new THREE.Mesh(
+      new THREE.RingGeometry(4.52, 5.05, 84),
+      new THREE.MeshBasicMaterial({ color: 0xe0a96d, side: THREE.DoubleSide, transparent: true, opacity: 0.22 })
+    );
+    p3RingGroup.add(p3R1, p3R2, p3R3);
+
     const p3MoonGroup = new THREE.Group();
     p3Group.add(p3MoonGroup);
+
     const p3Shepherd1 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.32, 10, 10),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
+      new THREE.SphereGeometry(0.28, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xf5f2eb })
     );
-    p3Shepherd1.position.set(5.1, 0, 0);
-    p3MoonGroup.add(p3Shepherd1);
+    p3Shepherd1.position.set(5.3, 0.3, 0);
+
     const p3Shepherd2 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xd4a373 })
+      new THREE.SphereGeometry(0.22, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd4a373 })
     );
-    p3Shepherd2.position.set(-3.3, 0.25, 0);
-    p3MoonGroup.add(p3Shepherd2);
+    p3Shepherd2.position.set(-3.6, -0.25, 1.2);
+    p3MoonGroup.add(p3Shepherd1, p3Shepherd2);
 
-    const hit3 = new THREE.Mesh(new THREE.SphereGeometry(4.2, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
-    hit3.userData = { sectorKey: 'systems' };
-    p3Group.add(hit3);
-    interactiveHitObjects.push(p3Core, hit3);
+    const hit3 = new THREE.Mesh(
+      new THREE.SphereGeometry(3.8, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false })
+    );
+    hit3.userData = { sectorKey: 'systems', label: 'P-03 // CORE SYSTEMS & STACK' };
+    p3Core.userData = { sectorKey: 'systems', label: 'P-03 // CORE SYSTEMS & STACK' };
+    p3Group.add(hit3, p3Core);
+    interactiveHitObjects.push(hit3, p3Core);
 
-    // Planet 04: Relay
+    // Planet 04: Telemetry Relay ("Cooper Station Dyson Relay")
     const p4Group = new THREE.Group();
     solarPlane.add(p4Group);
-    const p4Core = new THREE.Mesh(
-      new THREE.SphereGeometry(1.05, 14, 14),
-      new THREE.MeshBasicMaterial({ color: 0xf5f2eb })
-    );
-    p4Core.userData = { sectorKey: 'contact' };
+
+    const p4CoreGeo = new THREE.OctahedronGeometry(1.15, 2);
+    const p4CoreMat = new THREE.MeshStandardMaterial({
+      color: 0xf5f2eb,
+      emissive: 0x2a3648,
+      roughness: 0.18,
+      metalness: 0.6,
+      flatShading: true,
+    });
+    const p4Core = new THREE.Mesh(p4CoreGeo, p4CoreMat);
     p4Group.add(p4Core);
-    const p4Halo = new THREE.Mesh(
-      new THREE.SphereGeometry(1.22, 10, 10),
-      new THREE.MeshBasicMaterial({ color: 0x89cff0, wireframe: true, transparent: true, opacity: 0.45 })
+
+    const p4StationTorus = new THREE.Mesh(
+      new THREE.TorusGeometry(1.75, 0.11, 16, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xcbd5e1,
+        emissive: 0x1e293b,
+        roughness: 0.3,
+        metalness: 0.75,
+      })
     );
-    p4Halo.userData = { sectorKey: 'contact' };
-    p4Group.add(p4Halo);
+    p4StationTorus.rotation.x = Math.PI / 3;
+    p4Group.add(p4StationTorus);
 
     const p4PolarDish = new THREE.Mesh(
-      new THREE.RingGeometry(1.4, 1.48, 32),
-      new THREE.MeshBasicMaterial({ color: 0xf5f2eb, side: THREE.DoubleSide, transparent: true, opacity: 0.45 })
+      new THREE.TorusGeometry(2.15, 0.03, 12, 48),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65 })
     );
-    p4PolarDish.rotation.x = Math.PI / 2;
+    p4PolarDish.rotation.y = Math.PI / 2;
     p4Group.add(p4PolarDish);
 
-    // Orbiting Relay Sensor Probe
     const p4ProbeGroup = new THREE.Group();
     p4Group.add(p4ProbeGroup);
-    const p4Probe = new THREE.Mesh(
-      new THREE.BoxGeometry(0.28, 0.28, 0.28),
-      new THREE.MeshBasicMaterial({ color: 0x89cff0 })
-    );
-    p4Probe.position.set(2.1, 0, 0);
-    p4ProbeGroup.add(p4Probe);
 
-    const hit4 = new THREE.Mesh(new THREE.SphereGeometry(2.8, 12, 12), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0 }));
-    hit4.userData = { sectorKey: 'contact' };
+    const p4P1 = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.28, 0),
+      new THREE.MeshBasicMaterial({ color: 0xd4a373 })
+    );
+    p4P1.position.set(2.6, 0, 0);
+
+    const p4P2 = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.28, 0),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    p4P2.position.set(-2.6, 0, 0);
+    p4ProbeGroup.add(p4P1, p4P2);
+
+    const hit4 = new THREE.Mesh(
+      new THREE.SphereGeometry(3.2, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false })
+    );
+    hit4.userData = { sectorKey: 'contact', label: 'P-04 // DEEP SPACE RELAY' };
+    p4Core.userData = { sectorKey: 'contact', label: 'P-04 // DEEP SPACE RELAY' };
     p4Group.add(hit4);
-    interactiveHitObjects.push(p4Core, p4Halo, hit4);
+    interactiveHitObjects.push(hit4, p4Core);
 
     const planetsData = {
       missions: {
@@ -360,9 +609,8 @@ export default function CosmicCanvas({
         ring1: p1Ring1,
         ring2: p1Ring2,
         probeGroup: p1ProbeGroup,
-        probeAngle: 0,
-        radius: 6.2,
-        speed: 0.012,
+        radius: 6.6,
+        speed: 0.011,
         angle: 1.1,
         targetScale: 1.0,
       },
@@ -371,10 +619,9 @@ export default function CosmicCanvas({
         group: p2Group,
         coreMesh: p2Core,
         atmoMesh: p2Atmo,
-        moonGroup: p2MoonGroup,
-        moonAngle: 0,
-        radius: 10.4,
-        speed: 0.0085,
+        moonOrbitGroup: p2MoonOrbitGroup,
+        radius: 10.6,
+        speed: 0.008,
         angle: 3.5,
         targetScale: 1.0,
       },
@@ -384,9 +631,8 @@ export default function CosmicCanvas({
         coreMesh: p3Core,
         ringGroup: p3RingGroup,
         moonGroup: p3MoonGroup,
-        moonAngle: 0,
         radius: 17.5,
-        speed: 0.0055,
+        speed: 0.0052,
         angle: 5.2,
         targetScale: 1.0,
       },
@@ -394,9 +640,9 @@ export default function CosmicCanvas({
         key: 'contact',
         group: p4Group,
         coreMesh: p4Core,
-        haloMesh: p4Halo,
+        stationTorus: p4StationTorus,
+        polarDish: p4PolarDish,
         probeGroup: p4ProbeGroup,
-        probeAngle: 0,
         radius: 23.0,
         speed: 0.0038,
         angle: 2.1,
@@ -404,7 +650,7 @@ export default function CosmicCanvas({
       },
     };
 
-    // 5. 3D Orbital Anchors for 9 Differentiated Skill Stars
+    // 6. 3D Orbital Anchors for 9 Differentiated Skill Stars
     const skillNodes = {};
     TECH_STARS.forEach((star) => {
       const node = new THREE.Group();
@@ -417,9 +663,7 @@ export default function CosmicCanvas({
       const moonGroup = new THREE.Group();
       node.add(moonGroup);
 
-      // Unique 3D Geometries tailored to each skill archetype
       if (star.id === 'docker') {
-        // Container Cube Wireframe Shell + Equatorial Band
         wireMesh = new THREE.Mesh(
           new THREE.BoxGeometry(sScale * 1.35, sScale * 1.35, sScale * 1.35),
           new THREE.MeshBasicMaterial({ color: 0x2496ed, wireframe: true, transparent: true, opacity: 0.45 })
@@ -436,7 +680,6 @@ export default function CosmicCanvas({
         moonMesh.position.set(sScale * 1.55, 0, 0);
         moonGroup.add(moonMesh);
       } else if (star.id === 'golang') {
-        // Icosahedron Geodesic Wireframe + Dual Hyper-Speed Gyro Rings + Dual Probes
         wireMesh = new THREE.Mesh(
           new THREE.IcosahedronGeometry(sScale * 1.08, 1),
           new THREE.MeshBasicMaterial({ color: 0x00add8, wireframe: true, transparent: true, opacity: 0.42 })
@@ -464,7 +707,6 @@ export default function CosmicCanvas({
         moon2.position.set(-sScale * 1.55, 0, 0);
         moonGroup.add(moon1, moon2);
       } else if (star.id === 'nodejs') {
-        // Hexagonal Ring System (Node.js logo hexagon shape) + Dual Emerald Moons
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 0.95, 12, 12),
           new THREE.MeshBasicMaterial({ color: 0x339933, wireframe: true, transparent: true, opacity: 0.35 })
@@ -481,7 +723,6 @@ export default function CosmicCanvas({
         moon1.position.set(sScale * 1.52, 0, 0);
         moonGroup.add(moon1);
       } else if (star.id === 'postgres') {
-        // Concentric Dual Relational Ring Bands (representing database tables)
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 1.0, 16, 8),
           new THREE.MeshBasicMaterial({ color: 0x4169e1, wireframe: true, transparent: true, opacity: 0.38 })
@@ -504,7 +745,6 @@ export default function CosmicCanvas({
         moon1.position.set(sScale * 1.68, 0, 0);
         moonGroup.add(moon1);
       } else if (star.id === 'redis') {
-        // Blazing Heat Corona + Dual Rapid Micro-Probes
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 1.1, 10, 10),
           new THREE.MeshBasicMaterial({ color: 0xdc382d, wireframe: true, transparent: true, opacity: 0.48 })
@@ -526,7 +766,6 @@ export default function CosmicCanvas({
         moon2.position.set(-sScale * 1.65, 0, 0);
         moonGroup.add(moon1, moon2);
       } else if (star.id === 'php') {
-        // Saturnian Wide Flat Ring Disk with Cassini Gap
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 0.95, 12, 12),
           new THREE.MeshBasicMaterial({ color: 0x777bb4, wireframe: true, transparent: true, opacity: 0.28 })
@@ -536,7 +775,6 @@ export default function CosmicCanvas({
           new THREE.MeshBasicMaterial({ color: 0x777bb4, side: THREE.DoubleSide, transparent: true, opacity: 0.42 })
         );
         ring1.rotation.x = Math.PI / 2.7;
-        ring1.rotation.y = 0.15;
         const moon1 = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 0.18, 8, 8),
           new THREE.MeshBasicMaterial({ color: 0xc8bfaf })
@@ -544,7 +782,6 @@ export default function CosmicCanvas({
         moon1.position.set(sScale * 2.2, 0, 0);
         moonGroup.add(moon1);
       } else if (star.id === 'laravel') {
-        // Triple Orthogonal Intersecting Atomic Gyro Rings
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 0.96, 12, 12),
           new THREE.MeshBasicMaterial({ color: 0xff2d20, wireframe: true, transparent: true, opacity: 0.35 })
@@ -567,7 +804,6 @@ export default function CosmicCanvas({
         moon1.position.set(sScale * 1.5, 0, 0);
         moonGroup.add(moon1);
       } else if (star.id === 'nextjs') {
-        // Polar Vertical Ring Disk (passing north & south poles)
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 0.95, 12, 12),
           new THREE.MeshBasicMaterial({ color: 0xe5e7eb, wireframe: true, transparent: true, opacity: 0.35 })
@@ -584,7 +820,6 @@ export default function CosmicCanvas({
         moon1.position.set(0, sScale * 1.52, 0);
         moonGroup.add(moon1);
       } else if (star.id === 'grafana') {
-        // Radar Sweep Reticle with Crosshairs
         wireMesh = new THREE.Mesh(
           new THREE.SphereGeometry(sScale * 1.0, 12, 12),
           new THREE.MeshBasicMaterial({ color: 0xf46800, wireframe: true, transparent: true, opacity: 0.38 })
@@ -622,7 +857,7 @@ export default function CosmicCanvas({
       };
     });
 
-    // 6. 3D Flight Simulation for Fleet Dogfight (3 Rockets pursuing 3 Aliens)
+    // 7. 3D Flight Simulation for Fleet Dogfight (3 Rockets pursuing 3 Aliens)
     const fleetSim = {
       pair1: { t: 0.0, speed: 0.0075 },
       pair2: { t: 2.1, speed: 0.0058 },
@@ -672,17 +907,74 @@ export default function CosmicCanvas({
     const domFleetCache = {};
     const domPlanetCache = {};
 
-    // 7. Raycaster & Input Listeners (3D Interactive Planets + 360° Sumbu X & Y)
+    // 8. Raycaster & Desktop Pointer Drag-to-Orbit
     const raycaster = new THREE.Raycaster();
     const mouseVector = new THREE.Vector2();
 
+    let isPointerOrbiting = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let totalDragDist = 0;
+
+    const handlePointerDown = (e) => {
+      if (e.button !== 0) return;
+      isPointerOrbiting = true;
+      totalDragDist = 0;
+      stateRef.current.lastDragDistance = 0;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      canvas.classList.add('is-dragging-orbit');
+    };
+
+    const handlePointerMove = (e) => {
+      if (!isPointerOrbiting) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      totalDragDist += Math.hypot(dx, dy);
+      stateRef.current.lastDragDistance = totalDragDist;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+
+      if (totalDragDist > 4) {
+        if (stateRef.current.currentCamTarget !== 'overview') {
+          stateRef.current.currentCamTarget = 'overview';
+          document.querySelectorAll('.cam-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.getAttribute('data-cam-target') === 'overview');
+          });
+        }
+
+        const azimuthDelta = -dx * 0.0055;
+        const elevationDelta = dy * 0.0042;
+
+        stateRef.current.orbitalVelocityX = azimuthDelta * 0.35;
+        stateRef.current.targetOrbitalAngle += azimuthDelta;
+
+        stateRef.current.orbitalVelocityY = elevationDelta * 0.35;
+        stateRef.current.targetElevation = Math.max(-1.35, Math.min(1.35, stateRef.current.targetElevation + elevationDelta));
+      }
+    };
+
+    const handlePointerUp = () => {
+      if (!isPointerOrbiting) return;
+      isPointerOrbiting = false;
+      canvas.classList.remove('is-dragging-orbit');
+    };
+
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+
     const handleCanvasClick = (e) => {
-      // Don't intercept if clicked inside dialog or button
+      if (stateRef.current.lastDragDistance > 6) {
+        stateRef.current.lastDragDistance = 0;
+        return;
+      }
       if (e.target && typeof e.target.closest === 'function') {
         if (
           e.target.closest('dialog') ||
-          e.target.closest('button') ||
-          e.target.closest('a') ||
+          e.target.closest('.cockpit-modal') ||
+          e.target.closest('.top-hud') ||
+          e.target.closest('.bottom-hud') ||
           e.target.closest('.scroll-loop-hud') ||
           e.target.closest('.scroll-hud-fab') ||
           e.target.closest('.hero-overlay') ||
@@ -708,6 +1000,7 @@ export default function CosmicCanvas({
         }
       }
     };
+
     const handleWheel = (e) => {
       if (e.target && typeof e.target.closest === 'function') {
         if (e.target.closest('dialog') || e.target.closest('.cockpit-modal')) return;
@@ -718,31 +1011,20 @@ export default function CosmicCanvas({
         stateRef.current.currentCamTarget = 'overview';
       }
 
-      // Trackpad pinch zoom
-      if (e.ctrlKey || e.metaKey || e.altKey) {
-        const zoomDelta = e.deltaY * 0.045;
-        stateRef.current.targetRadius = Math.max(16.0, Math.min(46.0, stateRef.current.targetRadius + zoomDelta));
-        return;
-      }
-
       const dx = e.deltaX || 0;
       const dy = e.deltaY || 0;
 
-      // Sumbu X: Unbounded Continuous Turntable Orbit (Rotates around central vertical axis)
-      if (Math.abs(dx) > 0) {
+      if (Math.abs(dx) > Math.abs(dy)) {
         const azimuthDelta = dx * 0.0035;
         stateRef.current.orbitalVelocityX += azimuthDelta * 0.12;
         stateRef.current.targetOrbitalAngle += azimuthDelta;
-      }
-
-      // Sumbu Y: Elevation tilt around central pivot
-      if (Math.abs(dy) > 0) {
+      } else if (e.shiftKey) {
         const elevationDelta = -dy * 0.0022;
-        stateRef.current.orbitalVelocityY += elevationDelta * 0.12;
-        stateRef.current.targetElevation = Math.max(
-          -1.48,
-          Math.min(1.48, stateRef.current.targetElevation + elevationDelta)
-        );
+        stateRef.current.targetElevation = Math.max(-1.35, Math.min(1.35, stateRef.current.targetElevation + elevationDelta));
+      } else {
+        const zoomDelta = dy * 0.024;
+        stateRef.current.targetRadius = Math.max(13.5, Math.min(48.0, stateRef.current.targetRadius + zoomDelta));
+        stateRef.current.targetOrbitalAngle += dy * 0.0006;
       }
     };
 
@@ -782,17 +1064,14 @@ export default function CosmicCanvas({
 
         const elevationDelta = deltaY * 0.0032;
         stateRef.current.orbitalVelocityY += elevationDelta * 0.14;
-        stateRef.current.targetElevation = Math.max(
-          -1.48,
-          Math.min(1.48, stateRef.current.targetElevation + elevationDelta)
-        );
+        stateRef.current.targetElevation = Math.max(-1.35, Math.min(1.35, stateRef.current.targetElevation + elevationDelta));
       } else if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const currentDist = Math.sqrt(dx * dx + dy * dy);
         if (initialPinchDist > 10) {
           const ratio = initialPinchDist / currentDist;
-          stateRef.current.targetRadius = Math.max(16.0, Math.min(48.0, initialPinchRadius * ratio));
+          stateRef.current.targetRadius = Math.max(13.5, Math.min(48.0, initialPinchRadius * ratio));
         }
       }
     };
@@ -800,18 +1079,18 @@ export default function CosmicCanvas({
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowRight') stateRef.current.targetOrbitalAngle += 0.2;
       else if (e.key === 'ArrowLeft') stateRef.current.targetOrbitalAngle -= 0.2;
-      else if (e.key === 'ArrowUp') stateRef.current.targetElevation = Math.min(1.48, stateRef.current.targetElevation + 0.15);
-      else if (e.key === 'ArrowDown') stateRef.current.targetElevation = Math.max(-1.48, stateRef.current.targetElevation - 0.15);
-      else if (e.key === '+' || e.key === '=') stateRef.current.targetRadius = Math.max(16.0, stateRef.current.targetRadius - 3.5);
-      else if (e.key === '-' || e.key === '_') stateRef.current.targetRadius = Math.min(46.0, stateRef.current.targetRadius + 3.5);
+      else if (e.key === 'ArrowUp') stateRef.current.targetElevation = Math.min(1.35, stateRef.current.targetElevation + 0.15);
+      else if (e.key === 'ArrowDown') stateRef.current.targetElevation = Math.max(-1.35, stateRef.current.targetElevation - 0.15);
+      else if (e.key === '+' || e.key === '=') stateRef.current.targetRadius = Math.max(13.5, stateRef.current.targetRadius - 3.5);
+      else if (e.key === '-' || e.key === '_') stateRef.current.targetRadius = Math.min(48.0, stateRef.current.targetRadius + 3.5);
     };
 
     const handleMouseMove = (e) => {
-      stateRef.current.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-      stateRef.current.mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+      stateRef.current.mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      stateRef.current.mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
 
-      mouseVector.x = stateRef.current.mouseX;
-      mouseVector.y = -stateRef.current.mouseY;
+      mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseVector.y = -(e.clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(mouseVector, camera);
       const intersects = raycaster.intersectObjects(interactiveHitObjects);
 
@@ -826,7 +1105,6 @@ export default function CosmicCanvas({
           audioEngine.playUiClick(640, 'sine', 0.02);
           document.body.style.cursor = 'pointer';
 
-          // Toggle is-hovered class on DOM HUD buttons
           for (const key in planetsData) {
             const btn = document.getElementById(`planet-hud-${key}`);
             if (btn) btn.classList.toggle('is-hovered', key === detectedSector);
@@ -894,8 +1172,13 @@ export default function CosmicCanvas({
 
     const handleResize = () => {
       const mob = window.innerWidth < 768;
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.fov = mob ? 58 : 45;
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = aspect;
+      if (aspect < 1.0) {
+        camera.fov = Math.min(76, Math.max(54, (54 / aspect) * 0.58));
+      } else {
+        camera.fov = 54;
+      }
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
@@ -908,7 +1191,7 @@ export default function CosmicCanvas({
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
 
-    // 8. Animation Loop
+    // 9. Animation Loop
     const projectVector = new THREE.Vector3();
     const tempWorldPos = new THREE.Vector3();
     const tempAheadPos = new THREE.Vector3();
@@ -917,44 +1200,55 @@ export default function CosmicCanvas({
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
-      // Rotate Sun Core
-      sunMesh.rotation.y += 0.003;
-      sunMesh.rotation.x += 0.0015;
+      // Star Points Subtle Drift
+      starPoints.rotation.y += 0.00025;
+      starPoints.rotation.x += 0.0001;
 
-      // Update Planet Positions with Dynamic Hover Slowdown, Scale Lerp & Satellite Revolutions
+      // Rotate Gargantua Accretion Disk, Corona, and Lensing Arc
+      if (gargantuaDiskGroup) {
+        gargantuaDiskGroup.rotation.y -= 0.014;
+      }
+      if (gargantuaCorona) {
+        gargantuaCorona.rotation.y += 0.008;
+        gargantuaCorona.rotation.z -= 0.005;
+      }
+      if (gargantuaLensingRing && camera) {
+        gargantuaLensingRing.rotation.y = stateRef.current.orbitalAngle;
+      }
+
+      // Inner Scout Probe Orbit
+      scoutData.angle += scoutData.speed;
+      scoutData.group.position.x = Math.cos(scoutData.angle) * scoutData.radius;
+      scoutData.group.position.z = Math.sin(scoutData.angle) * scoutData.radius;
+
+      // Update 4 Sector Planets with Slowdown, Scale Lerp & Satellite Revolutions
       for (const key in planetsData) {
         const p = planetsData[key];
-        const isHovered = (stateRef.current.hoveredPlanet === key);
+        const isHovered = stateRef.current.hoveredPlanet === key;
+        const isDockedTarget = stateRef.current.currentCamTarget === key;
 
-        // Hover slows down revolution to 0.2x speed!
-        p.angle += p.speed * (isHovered ? 0.2 : 1.0);
+        // Active docked planet slows down to 0.12x; hover slows to 0.2x!
+        p.angle += p.speed * (isDockedTarget ? 0.12 : isHovered ? 0.2 : 1.0);
         p.group.position.x = Math.cos(p.angle) * p.radius;
         p.group.position.z = Math.sin(p.angle) * p.radius;
         p.group.position.y = 0;
 
         // Smooth scale lerp (enlarge when hovered!)
-        p.targetScale = isHovered ? 1.40 : 1.0;
+        p.targetScale = isHovered ? 1.35 : 1.0;
         const curScale = p.group.scale.x;
         const nextScale = curScale + (p.targetScale - curScale) * 0.12;
         p.group.scale.set(nextScale, nextScale, nextScale);
 
         // Dynamic axial rotation (spinning planet cores & rings)
-        if (p.coreMesh) p.coreMesh.rotation.y += 0.012;
+        if (p.coreMesh) p.coreMesh.rotation.y += 0.01;
         if (p.wireMesh) p.wireMesh.rotation.y -= 0.008;
-        if (p.atmoMesh) p.atmoMesh.rotation.y += 0.010;
+        if (p.atmoMesh) p.atmoMesh.rotation.y += 0.01;
         if (p.ring1) p.ring1.rotation.z += 0.018;
-        if (p.ring2) p.ring2.rotation.x += 0.012;
+        if (p.ring2) p.ring2.rotation.x += 0.015;
+        if (p.moonOrbitGroup) p.moonOrbitGroup.rotation.y += 0.038;
+        if (p.moonGroup) p.moonGroup.rotation.y += 0.032;
         if (p.ringGroup) p.ringGroup.rotation.z += 0.005;
-
-        // Dynamic revolving satellites for all 4 main planets!
-        if (p.probeGroup) {
-          p.probeAngle = (p.probeAngle || 0) + 0.045;
-          p.probeGroup.rotation.y = p.probeAngle;
-        }
-        if (p.moonGroup) {
-          p.moonAngle = (p.moonAngle || 0) + 0.038;
-          p.moonGroup.rotation.y = p.moonAngle;
-        }
+        if (p.probeGroup) p.probeGroup.rotation.y += 0.045;
       }
 
       // Update Skills 3D Positions in Orbit
@@ -965,8 +1259,7 @@ export default function CosmicCanvas({
         sData.node.position.z = Math.sin(sData.angle) * sData.radius;
         sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset;
 
-        // Smooth 3D scale interpolation for pop explosion and respawn
-        const baseScale = sData.scale || 1.0;
+        const baseScale = (sData.scale || 1.0) * 0.9;
         if (sData.isExploding) {
           sData.currentScale = (sData.currentScale ?? baseScale) * 0.72;
           if (sData.currentScale < 0.05) sData.currentScale = 0.0001;
@@ -981,10 +1274,7 @@ export default function CosmicCanvas({
         }
         sData.node.scale.set(sData.currentScale, sData.currentScale, sData.currentScale);
 
-        // Animate 3D wireframe spin, rings, and satellites
         if (sData.wireMesh) sData.wireMesh.rotation.y += 0.015;
-        if (sData.ring1) sData.ring1.rotation.z += 0.012;
-        if (sData.ring2) sData.ring2.rotation.y += 0.010;
         if (sData.moonGroup) {
           sData.moonAngle += 0.045;
           sData.moonGroup.rotation.y = sData.moonAngle;
@@ -1006,14 +1296,14 @@ export default function CosmicCanvas({
       }
 
       if (Math.abs(s.orbitalVelocityY) > 0.00004) {
-        s.targetElevation = Math.max(-1.48, Math.min(1.48, s.targetElevation + s.orbitalVelocityY));
+        s.targetElevation = Math.max(-1.35, Math.min(1.35, s.targetElevation + s.orbitalVelocityY));
         s.orbitalVelocityY *= 0.88;
       } else {
         s.orbitalVelocityY = 0;
       }
 
       if (s.autoOrbit) {
-        s.targetOrbitalAngle += 0.0028;
+        s.targetOrbitalAngle += 0.0032;
       }
 
       // Smooth interpolation
@@ -1021,69 +1311,96 @@ export default function CosmicCanvas({
       s.elevation += (s.targetElevation - s.elevation) * 0.10;
       s.radius += (s.targetRadius - s.radius) * 0.12;
 
-      // Spherical Camera Coordinates centered on Sun Pivot (360° X Turntable & Y Tilt)
+      // Camera Coordinates & 60:40 Viewport Framing
       const mob = window.innerWidth < 768;
-      const theta = s.orbitalAngle;
-      const phi = s.elevation;
-      const R = s.radius;
-
-      let camTargetX = 0, camTargetY = 0, camTargetZ = 0;
-      let lookTargetX = 0, lookTargetY = 0, lookTargetZ = 0;
-      let upX = 0, upY = 1, upZ = 0;
 
       if (s.currentCamTarget === 'overview') {
-        const cosPhi = Math.cos(phi);
-        const sinPhi = Math.sin(phi);
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
+        const theta = s.orbitalAngle;
+        const phi = s.elevation;
+        const R = s.radius;
+        const H = R * Math.cos(phi);
 
-        // Spherical position vector around central pivot (0, 0, 0)
-        camTargetX = R * cosPhi * sinTheta + s.mouseX * (mob ? 0.4 : 0.8);
-        camTargetY = R * sinPhi - s.mouseY * (mob ? 0.3 : 0.6);
-        camTargetZ = R * cosPhi * cosTheta;
+        const camTargetX = Math.sin(theta) * H + s.mouseX * (mob ? 0.5 : 1.0);
+        const camTargetZ = Math.cos(theta) * H;
+        const camTargetY = R * Math.sin(phi) - s.mouseY * (mob ? 0.4 : 0.8);
 
-        lookTargetX = s.mouseX * 0.4;
-        lookTargetY = -s.mouseY * 0.3;
-        lookTargetZ = 0;
+        const lerpSpeed = 0.055;
+        s.camLerp.x += (camTargetX - s.camLerp.x) * lerpSpeed;
+        s.camLerp.y += (camTargetY - s.camLerp.y) * lerpSpeed;
+        s.camLerp.z += (camTargetZ - s.camLerp.z) * lerpSpeed;
 
-        // Keep horizon level so Sumbu X revolves cleanly around the central vertical axis
-        upX = 0;
-        upY = 1;
-        upZ = 0;
+        const lookTargetX = s.mouseX * 0.5;
+        const lookTargetY = -s.mouseY * 0.4;
+        const lookTargetZ = 0;
+
+        s.camLerp.tx += (lookTargetX - s.camLerp.tx) * lerpSpeed;
+        s.camLerp.ty += (lookTargetY - s.camLerp.ty) * lerpSpeed;
+        s.camLerp.tz += (lookTargetZ - s.camLerp.tz) * lerpSpeed;
       } else if (planetsData[s.currentCamTarget]) {
+        // Real-time dynamic follow camera framed in the left 60% viewport
         const targetPlanet = planetsData[s.currentCamTarget];
-        const wp = new THREE.Vector3();
-        targetPlanet.group.getWorldPosition(wp);
-        // Desktop landscape 60:40: active planet framed centered in the left 60% cosmos viewport
-        const isLandscape = window.innerWidth >= 1024 && window.innerWidth > window.innerHeight;
-        const offsetX = mob ? 0 : (isLandscape ? 4.8 : 3.6);
-        camTargetX = wp.x + (mob ? 3.0 : 4.5) + offsetX;
-        camTargetY = wp.y + (mob ? 2.0 : 2.5);
-        camTargetZ = wp.z + (mob ? 4.5 : 6.0);
-        lookTargetX = wp.x + offsetX * 0.76;
-        lookTargetY = wp.y - 0.2;
-        lookTargetZ = wp.z;
-        upX = 0;
-        upY = 1;
-        upZ = 0;
+        const px = targetPlanet.group.position.x;
+        const py = targetPlanet.group.position.y;
+        const pz = targetPlanet.group.position.z;
+
+        // Radial and tangential unit vectors in the orbital plane
+        const pLen = Math.hypot(px, pz) || 1;
+        const rx = px / pLen;
+        const rz = pz / pLen;
+        const tx = -rz;
+        const tz = rx;
+
+        // Tailored close-up inspection distance per planet
+        const distMap = { missions: 5.4, experience: 6.0, systems: 8.4, contact: 6.2 };
+        const camDist = (distMap[s.currentCamTarget] || 6.2) * (mob ? 1.25 : 1.0);
+        const camHeight = mob ? 2.2 : 1.65;
+
+        // Base camera position outside and slightly ahead so Gargantua shines in background
+        const baseCamX = px + rx * (camDist * 0.84) + tx * (camDist * 0.46) + s.mouseX * 0.65;
+        const baseCamY = py + camHeight - s.mouseY * 0.55;
+        const baseCamZ = pz + rz * (camDist * 0.84) + tz * (camDist * 0.46);
+
+        // Compute camera right vector perpendicular to view ray
+        const vx = px - baseCamX;
+        const vz = pz - baseCamZ;
+        const vHoriz = Math.hypot(vx, vz) || 1;
+        const fx = vx / vHoriz;
+        const fz = vz / vHoriz;
+        const rightX = -fz;
+        const rightZ = fx;
+
+        // Shift camera & lookAt rightward so planet is pinned in the left 60% viewport beside docked modal
+        const fovRad = (camera.fov * Math.PI) / 180;
+        const halfHeight = camDist * Math.tan(fovRad * 0.5);
+        const halfWidth = halfHeight * camera.aspect;
+        const leftFrameShift = mob ? 0 : halfWidth * 0.36;
+
+        const desiredCamX = baseCamX + rightX * leftFrameShift;
+        const desiredCamY = baseCamY;
+        const desiredCamZ = baseCamZ + rightZ * leftFrameShift;
+
+        const desiredLookX = px + rightX * leftFrameShift;
+        const desiredLookY = py - (mob ? 0.4 : 0.1);
+        const desiredLookZ = pz + rightZ * leftFrameShift;
+
+        const followLerp = 0.075;
+        s.camLerp.x += (desiredCamX - s.camLerp.x) * followLerp;
+        s.camLerp.y += (desiredCamY - s.camLerp.y) * followLerp;
+        s.camLerp.z += (desiredCamZ - s.camLerp.z) * followLerp;
+
+        s.camLerp.tx += (desiredLookX - s.camLerp.tx) * followLerp;
+        s.camLerp.ty += (desiredLookY - s.camLerp.ty) * followLerp;
+        s.camLerp.tz += (desiredLookZ - s.camLerp.tz) * followLerp;
       }
 
-      const lerpSpeed = 0.08;
-      s.camLerp.x += (camTargetX - s.camLerp.x) * lerpSpeed;
-      s.camLerp.y += (camTargetY - s.camLerp.y) * lerpSpeed;
-      s.camLerp.z += (camTargetZ - s.camLerp.z) * lerpSpeed;
-      s.camLerp.tx += (lookTargetX - s.camLerp.tx) * lerpSpeed;
-      s.camLerp.ty += (lookTargetY - s.camLerp.ty) * lerpSpeed;
-      s.camLerp.tz += (lookTargetZ - s.camLerp.tz) * lerpSpeed;
-
-      // Always set pure unit length up vector directly to avoid zero-vector lerp singularities
-      camera.up.set(upX, upY, upZ);
+      camera.up.set(0, 1, 0);
       camera.position.set(s.camLerp.x, s.camLerp.y, s.camLerp.z);
       camera.lookAt(s.camLerp.tx, s.camLerp.ty, s.camLerp.tz);
 
       renderer.render(scene, camera);
 
-      // Project Planet Floating HUD Markers directly to DOM Elements (Zero React re-render lag)
+      // Project Planet Floating HUD Markers directly to DOM Elements
+      const camDir = camera.getWorldDirection(new THREE.Vector3());
       for (const key in planetsData) {
         if (!domPlanetCache[key]) {
           domPlanetCache[key] = document.getElementById(`planet-hud-${key}`);
@@ -1093,17 +1410,22 @@ export default function CosmicCanvas({
 
         const wp = new THREE.Vector3();
         planetsData[key].group.getWorldPosition(wp);
+
+        const toPlanet = wp.clone().sub(camera.position).normalize();
+        const isInFront = camDir.dot(toPlanet) > 0.2;
+
         projectVector.copy(wp).project(camera);
 
-        const isBehind = projectVector.z > 1.0;
         const x = (projectVector.x * 0.5 + 0.5) * window.innerWidth;
         const y = (-(projectVector.y * 0.5) + 0.5) * window.innerHeight;
 
-        if (isBehind || x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) {
+        if (!isInFront || projectVector.z >= 1.0) {
           pEl.style.opacity = '0';
           pEl.style.pointerEvents = 'none';
         } else {
-          pEl.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          pEl.style.left = `${x.toFixed(1)}px`;
+          pEl.style.top = `${(y + 44).toFixed(1)}px`;
+          pEl.style.transform = 'translate(-50%, -50%)';
           pEl.style.opacity = '1';
           pEl.style.pointerEvents = 'auto';
         }
@@ -1131,12 +1453,10 @@ export default function CosmicCanvas({
           el.style.opacity = '0';
           el.style.pointerEvents = 'none';
         } else {
-          // Perspective depth scaling (near = larger, far = smaller)
           const depthFactor = Math.max(0.72, Math.min(1.28, 28 / dist));
           const finalScale = (sData.scale || 1.0) * depthFactor * (mob ? 0.75 : 1.0);
           el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -50%) scale(${finalScale.toFixed(3)})`;
-          
-          // Foreground is 1.0, background stays nicely visible (0.60)
+
           const depthFade = Math.max(0.60, Math.min(1.0, 1.4 - dist / 55));
           el.style.opacity = depthFade.toFixed(2);
           el.style.pointerEvents = 'auto';
@@ -1160,10 +1480,8 @@ export default function CosmicCanvas({
         const fEl = domFleetCache[id];
         if (!fEl) return;
 
-        // Skip positioning if currently being dragged
         if (fEl.classList.contains('is-dragged')) return;
 
-        // Calculate 3D position in solarPlane
         const posLocal = getEntityPosition(id, sim.t);
         tempWorldPos.set(posLocal.x, posLocal.y, posLocal.z);
         solarPlane.localToWorld(tempWorldPos);
@@ -1179,7 +1497,6 @@ export default function CosmicCanvas({
           fEl.style.opacity = '0';
           fEl.style.pointerEvents = 'none';
         } else {
-          // Analytical heading from projected future point along trajectory (Zero camera jitter!)
           const posAhead = getEntityPosition(id, sim.t + 0.06);
           tempAheadPos.set(posAhead.x, posAhead.y, posAhead.z);
           solarPlane.localToWorld(tempAheadPos);
@@ -1191,7 +1508,6 @@ export default function CosmicCanvas({
           const dx = fxAhead - fx;
           const dy = fyAhead - fy;
           const baseAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-          // Rockets point UP by default in CSS (+90deg offset), Aliens point forward
           const headingDeg = isRocket ? baseAngle + 90 : baseAngle;
 
           const depthFactor = Math.max(0.70, Math.min(1.25, 28 / dist));
@@ -1204,7 +1520,7 @@ export default function CosmicCanvas({
         }
       });
 
-      // Update Telemetry Callbacks (Full 360° Omnidirectional Readouts)
+      // Update Telemetry Callbacks
       if (onUpdateTelemetry) {
         const twoPi = Math.PI * 2;
         let normAzimuth = s.orbitalAngle % twoPi;
@@ -1233,6 +1549,9 @@ export default function CosmicCanvas({
 
     return () => {
       cancelAnimationFrame(animId);
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('click', handleCanvasClick);
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);

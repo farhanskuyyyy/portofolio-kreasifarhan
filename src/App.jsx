@@ -29,6 +29,13 @@ export default function App() {
   const [zoomAction, setZoomAction] = useState(null);
   const [resetViewTrigger, setResetViewTrigger] = useState(0);
 
+  // Sync body.is-modal-docked class whenever modal is open
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('is-modal-docked', activeModal !== null);
+    }
+  }, [activeModal]);
+
   // Keyboard ESC closes active modal
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -153,7 +160,7 @@ export default function App() {
         />
 
         <main className="spatial-viewport" id="main-content">
-          <PlanetMarkers onSelectSector={handleOpenSector} />
+          <PlanetMarkers onSelectSector={handleOpenSector} activeSector={activeModal} />
           <HeroOverlay />
           <CelestialSkillStars />
           <RadarHud

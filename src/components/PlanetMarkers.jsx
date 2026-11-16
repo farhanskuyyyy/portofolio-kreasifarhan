@@ -1,7 +1,7 @@
 import React from 'react';
 import { audioEngine } from '../utils/audio';
 
-export default function PlanetMarkers({ onSelectSector }) {
+export default function PlanetMarkers({ onSelectSector, activeSector }) {
   const handleClick = (sector) => {
     audioEngine.playWarpSound();
     if (onSelectSector) onSelectSector(sector);
@@ -56,8 +56,9 @@ export default function PlanetMarkers({ onSelectSector }) {
         <button
           key={m.id}
           id={`planet-hud-${m.id}`}
+          data-sector={m.id}
           type="button"
-          className={`planet-floating-hud ${m.className}`}
+          className={`planet-floating-hud ${m.className} ${activeSector === m.id ? 'is-docked-target' : ''}`}
           style={{ opacity: 0, pointerEvents: 'none' }}
           onClick={() => handleClick(m.id)}
           onMouseEnter={() => handleMouseEnter(m.id)}

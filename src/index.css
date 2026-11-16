@@ -4458,3 +4458,125 @@ dialog.cockpit-modal[open] .modal-window {
   }
 }
 
+/* === INTERSTELLAR V5 PATCH : MODAL FIX, PLANET FOLLOW & ECLIPSE OPENING === */
+
+/* 1. Modal visibility fix: Ensure modals are strictly hidden until [open] */
+dialog.cockpit-modal:not([open]) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+dialog.cockpit-modal[open] {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+dialog.cockpit-modal:not([open]) .modal-window {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(60px) scale(0.96) !important;
+}
+
+/* 2. Fade out center hero title while inspecting a planet so left 60% is unobstructed */
+body.is-modal-docked .solar-hero-identity {
+  opacity: 0 !important;
+  transform: translateX(-50%) translateY(-16px) scale(0.95);
+  pointer-events: none !important;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.solar-hero-identity {
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Highlight active planet HUD tag on the left viewport when its modal is open */
+body.is-modal-docked .planet-floating-hud.is-docked-target {
+  border-color: #FFF8E7;
+  background: rgba(20, 25, 34, 0.95);
+  box-shadow: 0 0 28px rgba(212, 163, 115, 0.75), inset 0 0 14px rgba(212, 163, 115, 0.3);
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* 3. Gargantua Eclipse & Endurance Astrolabe Opening Styles */
+.rocket-opening-overlay {
+  background: radial-gradient(circle at 50% 50%, rgba(212, 163, 115, 0.08) 0%, rgba(4, 6, 10, 0.96) 70%);
+}
+
+.anamorphic-flare-streak {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(1100px, 96vw);
+  height: 2px;
+  transform: translate(-50%, -50%) scaleX(0.45);
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.45) 22%, #FFF8E7 50%, rgba(212, 163, 115, 0.85) 78%, transparent 100%);
+  box-shadow: 0 0 24px 3px rgba(212, 163, 115, 0.65), 0 0 48px 6px rgba(56, 189, 248, 0.35);
+  z-index: 100015;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease, height 0.6s ease;
+}
+
+.anamorphic-flare-streak.is-expanding {
+  transform: translate(-50%, -50%) scaleX(1.35);
+  height: 4px;
+  opacity: 0;
+}
+
+.rocket-vehicle-wrapper.endurance-aperture-emblem {
+  width: 168px !important;
+  height: 168px !important;
+  left: 50% !important;
+  top: 58% !important;
+  transform: translate(-50%, -50%) !important;
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.65s ease, filter 0.4s ease;
+}
+
+.rocket-vehicle-wrapper.endurance-aperture-emblem.is-igniting {
+  animation: none !important;
+  filter: drop-shadow(0 0 36px rgba(255, 248, 231, 0.95)) drop-shadow(0 0 64px rgba(212, 163, 115, 0.8));
+}
+
+.rocket-vehicle-wrapper.endurance-aperture-emblem.is-flying {
+  transform: translate(-50%, -50%) scale(1.85) !important;
+  opacity: 0 !important;
+}
+
+.astrolabe-outer-ring {
+  transform-origin: 100px 100px;
+  animation: svgSpinCCW 24s linear infinite;
+}
+
+.endurance-12-ring {
+  transform-origin: 100px 100px;
+  animation: svgSpinCW 14s linear infinite;
+}
+
+.rocket-vehicle-wrapper.is-igniting .endurance-12-ring,
+.rocket-vehicle-wrapper.is-flying .endurance-12-ring {
+  animation-duration: 1.8s;
+}
+
+.opening-cinematic-hud {
+  top: clamp(32px, 9vh, 88px) !important;
+  gap: 14px !important;
+}
+
+.hud-cinematic-title {
+  letter-spacing: 0.28em !important;
+  background: linear-gradient(180deg, #FFFFFF 10%, #F5F2EB 55%, #D4A373 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 28px rgba(212, 163, 115, 0.38)) !important;
+}
+
+.hud-launch-pill {
+  border-color: rgba(212, 163, 115, 0.5) !important;
+  background: rgba(12, 15, 22, 0.78) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 22px rgba(212, 163, 115, 0.2) !important;
+}
+
+
