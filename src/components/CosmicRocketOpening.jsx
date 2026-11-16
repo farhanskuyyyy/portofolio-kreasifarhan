@@ -131,6 +131,8 @@ export default function CosmicRocketOpening({ onComplete }) {
       className={`rocket-opening-overlay ${status === 'clearing' ? 'is-clearing' : ''}`}
       role="region"
       aria-label="Gerbang Pembuka Interstellar"
+      onClick={handleLaunch}
+      onTouchStart={handleLaunch}
     >
       {/* 1. Dynamic SVG Gravitational Horizon Aperture */}
       <svg
@@ -200,7 +202,8 @@ export default function CosmicRocketOpening({ onComplete }) {
       >
         <div className="hud-phase-chip">
           <span className="phase-beacon-dot"></span>
-          <span className="phase-text">ENDURANCE EXPEDITION // GARGANTUA SINGULARITY LOCK</span>
+          <span className="phase-text phase-text-desktop">ENDURANCE EXPEDITION // GARGANTUA SINGULARITY LOCK</span>
+          <span className="phase-text phase-text-mobile">ENDURANCE // SINGULARITY LOCK</span>
         </div>
 
         <div className="hud-headline-wrap">
