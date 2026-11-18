@@ -3567,12 +3567,12 @@ dialog.cockpit-modal[open] .modal-window {
 /* Spherical Glowing Celestial Body */
 .star-orb-body {
   position: relative;
-  width: calc(44px * var(--star-mastery-scale, 1));
-  height: calc(44px * var(--star-mastery-scale, 1));
+  width: calc(44px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(44px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border-radius: 50%;
   background: radial-gradient(circle at 32% 32%, rgba(255, 255, 255, 0.45) 0%, rgba(var(--star-glow-rgb), 0.65) 35%, rgba(12, 15, 20, 0.95) 85%);
   border: 1.5px solid var(--star-glow, #d4a373);
-  box-shadow: 0 0 calc(20px * var(--star-mastery-scale, 1)) rgba(var(--star-glow-rgb), 0.75),
+  box-shadow: 0 0 calc(20px * var(--orb-scale, var(--star-mastery-scale, 1))) rgba(var(--star-glow-rgb), 0.75),
               inset 0 0 14px rgba(var(--star-glow-rgb), 0.45);
   display: flex;
   align-items: center;
@@ -3614,10 +3614,10 @@ dialog.cockpit-modal[open] .modal-window {
 
 /* Primary Tilted Gyro Orbit Ring */
 .skill-orbit-track.track-primary {
-  width: calc(68px * var(--star-mastery-scale, 1));
-  height: calc(68px * var(--star-mastery-scale, 1));
-  margin-top: calc(-34px * var(--star-mastery-scale, 1));
-  margin-left: calc(-34px * var(--star-mastery-scale, 1));
+  width: calc(68px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(68px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-34px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-34px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border: 1.5px solid rgba(var(--star-glow-rgb), 0.55);
   box-shadow: 0 0 10px rgba(var(--star-glow-rgb), 0.35), inset 0 0 6px rgba(var(--star-glow-rgb), 0.2);
   transform: rotateX(68deg) rotateY(16deg);
@@ -3625,10 +3625,10 @@ dialog.cockpit-modal[open] .modal-window {
 
 /* Secondary Orthogonal Gyro Ring (Planet Missions style) */
 .skill-orbit-track.track-secondary {
-  width: calc(76px * var(--star-mastery-scale, 1));
-  height: calc(76px * var(--star-mastery-scale, 1));
-  margin-top: calc(-38px * var(--star-mastery-scale, 1));
-  margin-left: calc(-38px * var(--star-mastery-scale, 1));
+  width: calc(76px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(76px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-38px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-38px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border: 1px dashed rgba(var(--star-glow-rgb), 0.38);
   transform: rotateX(68deg) rotateY(-34deg);
 }
@@ -3644,7 +3644,7 @@ dialog.cockpit-modal[open] .modal-window {
   border-radius: 50%;
   background: #FFFFFF;
   box-shadow: 0 0 8px #FFFFFF, 0 0 14px var(--star-glow);
-  transform-origin: 3.5px calc(34px * var(--star-mastery-scale, 1) + 3.5px);
+  transform-origin: 3.5px calc(34px * var(--orb-scale, var(--star-mastery-scale, 1)) + 3.5px);
   animation: satelliteOrbitRev 3.2s linear infinite;
 }
 
@@ -3706,7 +3706,7 @@ dialog.cockpit-modal[open] .modal-window {
   border-radius: 50%;
   background: #00ADD8;
   box-shadow: 0 0 10px #00ADD8;
-  transform-origin: 3.5px calc(34px * var(--star-mastery-scale, 1) + 3.5px);
+  transform-origin: 3.5px calc(34px * var(--orb-scale, var(--star-mastery-scale, 1)) + 3.5px);
   animation: satelliteOrbitRev 2.4s linear infinite;
   animation-delay: -1.2s;
 }
@@ -3722,17 +3722,17 @@ dialog.cockpit-modal[open] .modal-window {
 
 /* 4. PostgreSQL: Concentric Dual Rings */
 .star-variant-postgres .track-primary {
-  width: calc(62px * var(--star-mastery-scale, 1));
-  height: calc(62px * var(--star-mastery-scale, 1));
-  margin-top: calc(-31px * var(--star-mastery-scale, 1));
-  margin-left: calc(-31px * var(--star-mastery-scale, 1));
+  width: calc(62px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(62px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-31px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-31px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border-width: 2px;
 }
 .star-variant-postgres .track-secondary {
-  width: calc(84px * var(--star-mastery-scale, 1));
-  height: calc(84px * var(--star-mastery-scale, 1));
-  margin-top: calc(-42px * var(--star-mastery-scale, 1));
-  margin-left: calc(-42px * var(--star-mastery-scale, 1));
+  width: calc(84px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(84px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-42px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-42px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border: 1.5px solid rgba(65, 105, 225, 0.4);
   transform: rotateX(68deg) rotateY(16deg);
 }
@@ -3759,7 +3759,7 @@ dialog.cockpit-modal[open] .modal-window {
   border-radius: 50%;
   background: #FFA07A;
   box-shadow: 0 0 8px #FFA07A;
-  transform-origin: 3.5px calc(34px * var(--star-mastery-scale, 1) + 3.5px);
+  transform-origin: 3.5px calc(34px * var(--orb-scale, var(--star-mastery-scale, 1)) + 3.5px);
   animation: satelliteOrbitRevReverse 2.9s linear infinite;
 }
 @keyframes satelliteOrbitRevReverse {
@@ -3769,10 +3769,10 @@ dialog.cockpit-modal[open] .modal-window {
 
 /* 6. PHP: Saturnian Wide Flat Elliptical Disk */
 .star-variant-php .track-primary {
-  width: calc(96px * var(--star-mastery-scale, 1));
-  height: calc(96px * var(--star-mastery-scale, 1));
-  margin-top: calc(-48px * var(--star-mastery-scale, 1));
-  margin-left: calc(-48px * var(--star-mastery-scale, 1));
+  width: calc(96px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(96px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-48px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-48px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border: 4px solid rgba(119, 123, 180, 0.35);
   border-top-color: rgba(119, 123, 180, 0.6);
   border-bottom-color: rgba(119, 123, 180, 0.5);
@@ -3787,10 +3787,10 @@ dialog.cockpit-modal[open] .modal-window {
   border-radius: 50%;
   pointer-events: none;
   box-sizing: border-box;
-  width: calc(72px * var(--star-mastery-scale, 1));
-  height: calc(72px * var(--star-mastery-scale, 1));
-  margin-top: calc(-36px * var(--star-mastery-scale, 1));
-  margin-left: calc(-36px * var(--star-mastery-scale, 1));
+  width: calc(72px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(72px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-36px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-36px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border: 1px dashed rgba(255, 45, 32, 0.45);
   transform: rotateX(25deg) rotateZ(60deg);
 }
@@ -3806,10 +3806,10 @@ dialog.cockpit-modal[open] .modal-window {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(74px * var(--star-mastery-scale, 1));
-  height: calc(74px * var(--star-mastery-scale, 1));
-  margin-top: calc(-37px * var(--star-mastery-scale, 1));
-  margin-left: calc(-37px * var(--star-mastery-scale, 1));
+  width: calc(74px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(74px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-top: calc(-37px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  margin-left: calc(-37px * var(--orb-scale, var(--star-mastery-scale, 1)));
   border-radius: 50%;
   background: conic-gradient(from 0deg, rgba(244, 104, 0, 0.35) 0deg, rgba(244, 104, 0, 0) 60deg);
   animation: radarSweepSpin 3s linear infinite;
@@ -3936,33 +3936,6 @@ dialog.cockpit-modal[open] .modal-window {
 @media (max-width: 768px) {
   /* 3D positioned */
 
-  .star-orb-body {
-    width: 34px;
-    height: 34px;
-  }
-
-  .skill-orbit-track.track-primary {
-    width: calc(52px * var(--star-mastery-scale, 1));
-    height: calc(52px * var(--star-mastery-scale, 1));
-    margin-top: calc(-26px * var(--star-mastery-scale, 1));
-    margin-left: calc(-26px * var(--star-mastery-scale, 1));
-  }
-
-  .skill-orbit-track.track-secondary {
-    width: calc(58px * var(--star-mastery-scale, 1));
-    height: calc(58px * var(--star-mastery-scale, 1));
-    margin-top: calc(-29px * var(--star-mastery-scale, 1));
-    margin-left: calc(-29px * var(--star-mastery-scale, 1));
-  }
-
-  .skill-satellite-bead {
-    transform-origin: 3.5px calc(26px * var(--star-mastery-scale, 1) + 3.5px);
-  }
-
-  .star-orb-icon {
-    width: 17px;
-    height: 17px;
-  }
 
   .star-label-pip {
     font-size: 6.5px;
@@ -5296,6 +5269,165 @@ body.opening-arrival .theme-basalt > :not(.rocket-opening-overlay) {
 @media (prefers-reduced-motion: reduce) {
   .singularity-flash,
   .singularity-profile-card {
+    animation: none;
+  }
+}
+
+/* === SKILL ORB PRECISION : sized & centred from the 3D projection (--orb-scale set in CosmicCanvas) === */
+
+/* The element is translated so the orb centre (not the orb + label stack) sits on the 3D body */
+.pop-explosion-fx,
+.pop-respawn-fx,
+.skill-gyro-system {
+  top: calc(22px * var(--orb-scale, var(--star-mastery-scale, 1)));
+}
+
+.star-orb-icon {
+  width: calc(22px * var(--orb-scale, var(--star-mastery-scale, 1)));
+  height: calc(22px * var(--orb-scale, var(--star-mastery-scale, 1)));
+}
+
+.star-orb-body {
+  flex-shrink: 0;
+}
+
+/* === UFO TYPING HUNT === */
+
+.alien-entity.ufo-dormant {
+  display: none;
+}
+
+.ufo-name-tag {
+  font-size: clamp(8px, 0.85vw, 11px);
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: var(--text-sandstone);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ufo-name-typed {
+  color: var(--accent-amber);
+  text-shadow: 0 0 8px var(--accent-amber-glow);
+}
+
+.alien-entity.is-locked .ufo-name-tag {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 12px var(--accent-amber-glow);
+}
+
+.alien-entity.is-locked .alien-biosphere {
+  filter: drop-shadow(0 0 10px rgba(212, 163, 115, 0.85));
+}
+
+/* Lock-on reticle around the targeted saucer */
+.alien-entity.is-locked::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 70px;
+  height: 56px;
+  transform: translateX(-50%);
+  border: 1px dashed rgba(212, 163, 115, 0.8);
+  border-radius: 10px;
+  pointer-events: none;
+  animation: ufoLockPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes ufoLockPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.ufo-name-tag.is-error {
+  border-color: #e5484d;
+  color: #ff9a9a;
+  animation: ufoTagShake 0.24s linear;
+}
+
+@keyframes ufoTagShake {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -3px 0; }
+  75% { translate: 3px 0; }
+}
+
+.ufo-hunt-hud {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 25;
+  min-width: 300px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(16, 18, 22, 0.82);
+  border: 1px solid var(--border-hairline);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-telemetry);
+  pointer-events: none;
+}
+
+.uh-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--accent-amber);
+}
+
+.uh-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+  animation: beaconPulse 1.6s ease-in-out infinite;
+}
+
+.uh-buffer {
+  margin: 8px 0;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--text-mineral);
+}
+
+.uh-prompt {
+  margin-right: 8px;
+  color: var(--accent-amber);
+}
+
+.uh-typed {
+  color: var(--text-ivory);
+}
+
+.uh-idle {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.uh-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--text-mineral);
+}
+
+.uh-stats strong {
+  color: var(--text-ivory);
+  font-weight: 500;
+}
+
+body.is-modal-docked .ufo-hunt-hud {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alien-entity.is-locked::before,
+  .ufo-name-tag.is-error {
     animation: none;
   }
 }

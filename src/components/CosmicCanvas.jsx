@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { audioEngine } from '../utils/audio';
+import { UFO_FLEET, getExtraUfoPosition } from '../utils/ufoFleet';
 import { TECH_STARS } from './CelestialSkillStars';
 
 export default function CosmicCanvas({
@@ -401,7 +402,7 @@ export default function CosmicCanvas({
     const p1Group = new THREE.Group();
     solarPlane.add(p1Group);
 
-    const p1CoreGeo = new THREE.SphereGeometry(1.05, 32, 32);
+    const p1CoreGeo = new THREE.SphereGeometry(1.05, 64, 64);
     const p1CoreMat = new THREE.MeshStandardMaterial({
       color: 0x1e6b7b,
       emissive: 0x0b2d39,
@@ -458,19 +459,18 @@ export default function CosmicCanvas({
     const p2Group = new THREE.Group();
     solarPlane.add(p2Group);
 
-    const p2CoreGeo = new THREE.IcosahedronGeometry(1.32, 2);
+    const p2CoreGeo = new THREE.SphereGeometry(1.32, 64, 64);
     const p2CoreMat = new THREE.MeshStandardMaterial({
       color: 0x5aafa9,
       emissive: 0x16383b,
       roughness: 0.35,
       metalness: 0.2,
-      flatShading: true,
     });
     const p2Core = new THREE.Mesh(p2CoreGeo, p2CoreMat);
     p2Group.add(p2Core);
 
     const p2Atmo = new THREE.Mesh(
-      new THREE.SphereGeometry(1.46, 20, 20),
+      new THREE.SphereGeometry(1.46, 48, 48),
       new THREE.MeshBasicMaterial({ color: 0xa5f3fc, wireframe: true, transparent: true, opacity: 0.25 })
     );
     p2Group.add(p2Atmo);
@@ -545,7 +545,7 @@ export default function CosmicCanvas({
       return tex;
     };
 
-    const p3CoreGeo = new THREE.SphereGeometry(1.9, 36, 36);
+    const p3CoreGeo = new THREE.SphereGeometry(1.9, 64, 64);
     const p3CoreMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       map: createGasGiantTexture(),
@@ -686,6 +686,7 @@ export default function CosmicCanvas({
     const planetsData = {
       missions: {
         key: 'missions',
+        bodyRadius: 1.3,
         group: p1Group,
         coreMesh: p1Core,
         wireMesh: p1Wire,
@@ -699,6 +700,7 @@ export default function CosmicCanvas({
       },
       experience: {
         key: 'experience',
+        bodyRadius: 1.5,
         group: p2Group,
         coreMesh: p2Core,
         atmoMesh: p2Atmo,
@@ -710,6 +712,7 @@ export default function CosmicCanvas({
       },
       systems: {
         key: 'systems',
+        bodyRadius: 2.3,
         group: p3Group,
         coreMesh: p3Core,
         wireMesh: p3BandMesh,
@@ -722,6 +725,7 @@ export default function CosmicCanvas({
       },
       contact: {
         key: 'contact',
+        bodyRadius: 1.8,
         group: p4Group,
         coreMesh: p4Core,
         stationTorus: p4StationTorus,
@@ -924,6 +928,15 @@ export default function CosmicCanvas({
       if (wireMesh) node.add(wireMesh);
       if (ring1) node.add(ring1);
 
+      // Visual body radius in world units; the DOM orb is sized from its projection every frame
+      let bodyRadius = sScale;
+      if (wireMesh) {
+        wireMesh.geometry.computeBoundingSphere();
+        bodyRadius = wireMesh.geometry.boundingSphere.radius;
+        // A cube's bounding sphere overshoots its silhouette; use the half side instead
+        if (star.id === 'docker') bodyRadius /= Math.sqrt(3);
+      }
+
       skillNodes[star.id] = {
         node,
         wireMesh,
@@ -938,6 +951,8 @@ export default function CosmicCanvas({
         yAmp: star.yAmp || 0.8,
         yFreq: star.yFreq || 1.8,
         scale: star.scale || 1.0,
+        bodyRadius,
+        orbDiameter: 0,
       };
     });
 
@@ -947,9 +962,17 @@ export default function CosmicCanvas({
       pair2: { t: 2.1, speed: 0.0058 },
       pair3: { t: 4.3, speed: 0.0068 },
     };
+    // Reinforcement saucers (typing hunt) fly solo orbits
+    const extraUfos = UFO_FLEET.filter((u) => u.orbit).map((u) => ({
+      id: u.id,
+      orbit: u.orbit,
+      sim: { t: u.orbit.phase, speed: u.orbit.speed },
+    }));
 
     const getEntityPosition = (id, time) => {
       let x = 0, y = 0, z = 0;
+      const extra = extraUfos.find((u) => u.id === id);
+      if (extra) return getExtraUfoPosition(extra.orbit, time);
       if (id === 'alien-1') {
         const r = 14.5 + Math.sin(time * 3.0) * 1.8;
         x = Math.cos(time) * r;
@@ -1283,7 +1306,9 @@ export default function CosmicCanvas({
     window.addEventListener('skillStarExplode', handleSkillExplode);
     window.addEventListener('skillStarRespawn', handleSkillRespawn);
 
+    let hudOrigin = null; // window offset of the planet label container, refreshed on resize
     const handleResize = () => {
+      hudOrigin = null;
       const mob = window.innerWidth < 768;
       const aspect = window.innerWidth / window.innerHeight;
       camera.aspect = aspect;
@@ -1310,7 +1335,19 @@ export default function CosmicCanvas({
     const tempAheadPos = new THREE.Vector3();
     const pAheadProj = new THREE.Vector3();
 
+    const ORB_BASE_PX = 44; // .star-orb-body diameter at --orb-scale: 1
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    // On-screen radius (px) of a world-space sphere: project its center and a point one radius along camera-up
+    const camUpVec = new THREE.Vector3();
+    const radiusProbe = new THREE.Vector3();
+    const radiusCenter = new THREE.Vector3();
+    const projectRadiusPx = (worldPos, worldRadius) => {
+      camUpVec.set(0, 1, 0).applyQuaternion(camera.quaternion);
+      radiusCenter.copy(worldPos).project(camera);
+      radiusProbe.copy(worldPos).addScaledVector(camUpVec, worldRadius).project(camera);
+      return Math.abs(radiusProbe.y - radiusCenter.y) * 0.5 * window.innerHeight;
+    };
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -1403,7 +1440,8 @@ export default function CosmicCanvas({
           window.dispatchEvent(new CustomEvent('skillStarImpact', { detail: { id } }));
         }
 
-        const baseScale = (sData.scale || 1.0) * 0.9;
+        // Geometry is already built at the star's scale, so the node only carries the pop/respawn multiplier
+        const baseScale = 1.0;
         if (sData.isExploding) {
           sData.currentScale = (sData.currentScale ?? baseScale) * 0.72;
           if (sData.currentScale < 0.05) sData.currentScale = 0.0001;
@@ -1429,6 +1467,9 @@ export default function CosmicCanvas({
       fleetSim.pair1.t += fleetSim.pair1.speed;
       fleetSim.pair2.t += fleetSim.pair2.speed;
       fleetSim.pair3.t += fleetSim.pair3.speed;
+      extraUfos.forEach((u) => {
+        u.sim.t += u.sim.speed;
+      });
 
       // Physics momentum damping
       const s = stateRef.current;
@@ -1572,8 +1613,14 @@ export default function CosmicCanvas({
           pEl.style.opacity = '0';
           pEl.style.pointerEvents = 'none';
         } else {
-          pEl.style.left = `${x.toFixed(1)}px`;
-          pEl.style.top = `${(y + 44).toFixed(1)}px`;
+          // Labels live inside .spatial-viewport (below the header), so convert window coords to its box
+          if (!hudOrigin) {
+            const box = (pEl.offsetParent || document.body).getBoundingClientRect();
+            hudOrigin = { x: box.left, y: box.top };
+          }
+          const rimPx = projectRadiusPx(wp, planetsData[key].bodyRadius * planetsData[key].group.scale.x);
+          pEl.style.left = `${(x - hudOrigin.x).toFixed(1)}px`;
+          pEl.style.top = `${(y - hudOrigin.y + rimPx + 18).toFixed(1)}px`;
           pEl.style.transform = 'translate(-50%, -50%)';
           pEl.style.opacity = '1';
           pEl.style.pointerEvents = 'auto';
@@ -1602,9 +1649,13 @@ export default function CosmicCanvas({
           el.style.opacity = '0';
           el.style.pointerEvents = 'none';
         } else {
-          const depthFactor = Math.max(0.72, Math.min(1.28, 28 / dist));
-          const finalScale = (sData.scale || 1.0) * depthFactor * (mob ? 0.75 : 1.0);
-          el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -50%) scale(${finalScale.toFixed(3)})`;
+          // Orb sits just inside the 3D wireframe; the label pill hangs below without being scaled
+          const orbDiameter = Math.max(14, Math.min(240, projectRadiusPx(tempWorldPos, sData.bodyRadius) * 2 * 0.92));
+          if (Math.abs(orbDiameter - sData.orbDiameter) > 0.3) {
+            sData.orbDiameter = orbDiameter;
+            el.style.setProperty('--orb-scale', (orbDiameter / ORB_BASE_PX).toFixed(4));
+          }
+          el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, ${(-sData.orbDiameter / 2).toFixed(1)}px)`;
 
           const depthFade = Math.max(0.60, Math.min(1.0, 1.4 - dist / 55));
           el.style.opacity = depthFade.toFixed(2);
@@ -1620,6 +1671,7 @@ export default function CosmicCanvas({
         { id: 'rocket-2', sim: fleetSim.pair2, isRocket: true },
         { id: 'alien-3', sim: fleetSim.pair3, isRocket: false },
         { id: 'rocket-3', sim: fleetSim.pair3, isRocket: true },
+        ...extraUfos.map((u) => ({ id: u.id, sim: u.sim, isRocket: false })),
       ];
 
       fleetEntitiesList.forEach(({ id, sim, isRocket }) => {
