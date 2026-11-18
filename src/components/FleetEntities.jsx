@@ -240,12 +240,18 @@ export default function FleetEntities() {
           aria-label="Tesseract 5D Alien Probe. Click to trigger 5D core detonation shockwave."
           title="5D Tesseract: Click to explode"
         >
-          <div className="alien-biosphere">
-            <div className="alien-core"></div>
-            <div className="alien-eye"></div>
-            <div className="alien-tendril t1"></div>
-            <div className="alien-tendril t2"></div>
-            <div className="alien-tendril t3"></div>
+          <div className="alien-biosphere ufo-saucer" aria-hidden="true">
+            <div className="ufo-beam"></div>
+            <div className="ufo-dome">
+              <span className="ufo-pilot"></span>
+            </div>
+            <div className="ufo-hull">
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+            </div>
           </div>
           <div className="entity-tag">5D TESSERACT</div>
         </div>
@@ -260,12 +266,18 @@ export default function FleetEntities() {
           aria-label="Chrono Bio-Entity. Click to disintegrate alien biosystem."
           title="Chrono Entity: Click to explode"
         >
-          <div className="alien-biosphere variant-chrono">
-            <div className="alien-core core-amber"></div>
-            <div className="alien-eye eye-glow"></div>
-            <div className="alien-tendril t1"></div>
-            <div className="alien-tendril t2"></div>
-            <div className="alien-tendril t3"></div>
+          <div className="alien-biosphere ufo-saucer variant-chrono" aria-hidden="true">
+            <div className="ufo-beam"></div>
+            <div className="ufo-dome">
+              <span className="ufo-pilot"></span>
+            </div>
+            <div className="ufo-hull">
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+            </div>
           </div>
           <div className="entity-tag">CHRONO-PROBE</div>
         </div>
@@ -280,12 +292,18 @@ export default function FleetEntities() {
           aria-label="Void Resonator Entity. Click to collapse void core."
           title="Void Resonator: Click to explode"
         >
-          <div className="alien-biosphere variant-void">
-            <div className="alien-core core-cyan"></div>
-            <div className="alien-eye"></div>
-            <div className="alien-tendril t1"></div>
-            <div className="alien-tendril t2"></div>
-            <div className="alien-tendril t3"></div>
+          <div className="alien-biosphere ufo-saucer variant-void" aria-hidden="true">
+            <div className="ufo-beam"></div>
+            <div className="ufo-dome">
+              <span className="ufo-pilot"></span>
+            </div>
+            <div className="ufo-hull">
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+              <span className="ufo-light"></span>
+            </div>
           </div>
           <div className="entity-tag">VOID-ORB</div>
         </div>

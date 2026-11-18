@@ -27,24 +27,40 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
 
   const projects = [
     {
+      id: 6,
+      categories: ['golang', 'fintech'],
+      badgeAccent: 'B2B PPOB PLATFORM',
+      badgeDim: 'WEB3 PAYMENTS',
+      title: 'Airtime: B2B PPOB',
+      summary:
+        'Engineered a B2B PPOB platform facilitating bulk digital product distribution (Pulsa, Data, PLN, Bill Payments) across multiple merchant clients. Golang and Asynq run concurrent, non-blocking task execution over Redis job queues in a decoupled Producer-Consumer architecture, preventing transaction bottlenecks during peak hours. Integrated smart contracts through the Paymento crypto payment gateway and wallet-to-wallet stablecoin transfers (USDC, USDT0) across Arbitrum One, Base, OP Mainnet, and Polygon, with Alchemy RPC automating real-time on-chain payment verification and fulfillment. Includes a Laravel admin dashboard for financial reporting, vendor balance monitoring, and automated callback handling.',
+      metrics: [
+        { val: '99.9%', lbl: 'Delivery Reliability' },
+        { val: 'Multi-Chain', lbl: 'USDC · USDT0' },
+        { val: 'Asynq', lbl: 'Producer-Consumer Queue' },
+      ],
+      tags: ['Golang', 'PostgreSQL', 'Laravel', 'Redis', 'Asynq', 'Docker', 'Paymento', 'Alchemy RPC'],
+      linkText: 'INSPECT PLATFORM',
+    },
+    {
       id: 1,
-      category: 'golang',
+      categories: ['golang'],
       badgeAccent: 'LUMOSHIVE CORE PLATFORM',
       badgeDim: 'PRODUCTION',
-      title: 'Football Strategy & Fantasy Team Platform',
+      title: 'Fantasy Eleven: Football Strategy & Fantasy Team Platform',
       summary:
-        'Engineered a high-performance, low-latency backend in Golang to ingest and process real-time external sports APIs for clubs, leagues, and player profiles. Developed a dynamic gameweek-based dream team selection system and an interactive upcoming match score prediction engine.',
+        'Developed a Golang (Echo) backend ingesting external sports APIs for clubs, players, and leagues. Engineered a dynamic, gameweek-based dream team selection system and an interactive upcoming match score prediction engine, establishing a highly engaging, compliance-focused fantasy sports platform.',
       metrics: [
         { val: 'Real-Time', lbl: 'Sports API Stream' },
         { val: 'Gameweek', lbl: 'Squad Selection' },
         { val: 'Low Latency', lbl: 'Score Prediction' },
       ],
-      tags: ['Golang (Go)', 'Next.js', 'Redis', 'REST APIs', 'JSON Ingestion'],
+      tags: ['Golang (Echo)', 'Next.js', 'Redis', 'REST APIs'],
       linkText: 'INSPECT PLATFORM',
     },
     {
       id: 2,
-      category: 'fintech',
+      categories: ['fintech'],
       badgeAccent: 'TRANSACTIONAL ROUTER',
       badgeDim: 'MULTI-MERCHANT',
       title: 'Airgift: Transactional Middleware & Multimerchant API',
@@ -60,10 +76,10 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
     },
     {
       id: 3,
-      category: 'fintech',
+      categories: ['fintech'],
       badgeAccent: 'CONSUMER PAYMENTS',
       badgeDim: 'INSTANT FULFILLMENT',
-      title: 'Consumer Game Top-Up Portal',
+      title: 'Gameshop: Consumer Game Top-Up Portal',
       summary:
         'Developed and launched a dedicated consumer game voucher top-up portal, integrating multi-channel e-wallet and mobile billing (pulsa) payment gateways to deliver immediate, automated voucher purchases and direct-to-account top-ups.',
       metrics: [
@@ -76,23 +92,23 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
     },
     {
       id: 4,
-      category: 'enterprise',
+      categories: ['enterprise'],
       badgeAccent: 'WORKFORCE PLATFORM',
       badgeDim: 'ENTERPRISE',
       title: 'Enterprise Human Resource Information System (HRIS)',
       summary:
-        'Maintained, optimized, and upgraded core modules of an enterprise-grade HRIS website using Laravel, including attendance monitoring, automated leave approval request workflows, and scalable employee directory management.',
+        'Engineered and managed critical core modules of an enterprise HRIS web application built with Laravel and Livewire, including automated leave request approval pipelines, biometric and manual attendance tracking systems, and a scalable employee directory database.',
       metrics: [
         { val: 'Enterprise', lbl: 'Attendance Tracking' },
         { val: 'Automated', lbl: 'Leave Approvals' },
         { val: 'Scalable', lbl: 'Staff Directory' },
       ],
-      tags: ['PHP (Laravel)', 'MySQL', 'JavaScript', 'Docker', 'REST APIs'],
+      tags: ['PHP (Laravel)', 'MySQL', 'Livewire'],
       linkText: 'VIEW HRIS ARCHITECTURE',
     },
     {
       id: 5,
-      category: 'enterprise',
+      categories: ['enterprise'],
       badgeAccent: 'SUPPLY CHAIN & ETL',
       badgeDim: 'DATA WAREHOUSE',
       title: 'Corporate E-Procurement & Data Warehouse ETL',
@@ -109,7 +125,7 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
   ];
 
   const filteredProjects =
-    filter === 'all' ? projects : projects.filter((p) => p.category === filter);
+    filter === 'all' ? projects : projects.filter((p) => p.categories.includes(filter));
 
   return (
     <dialog
@@ -184,7 +200,7 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
             className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
             onClick={() => handleFilterClick('all')}
           >
-            ALL MISSIONS (5)
+            ALL MISSIONS ({projects.length})
           </button>
           <button
             type="button"
@@ -212,7 +228,7 @@ export default function MissionsModal({ isOpen, onClose, onSwitchSector }) {
         <div className="modal-body-scroll">
           <div className="projects-grid">
             {filteredProjects.map((p) => (
-              <article key={p.id} className="project-card" data-category={p.category}>
+              <article key={p.id} className="project-card" data-category={p.categories[0]}>
                 <div className="card-status-bar">
                   <span className="badge-accent">{p.badgeAccent}</span>
                   <span className="badge-dim">{p.badgeDim}</span>

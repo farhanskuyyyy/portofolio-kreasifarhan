@@ -3,6 +3,7 @@ import { audioEngine } from '../../utils/audio';
 
 export default function SystemsModal({ isOpen, onClose, onSwitchSector }) {
   const [telemetryLogs, setTelemetryLogs] = useState([
+    '[00:00:01] AIRTIME_ASYNQ: PPOB disbursement batch dispatched : supplier polling scheduled',
     '[00:00:01] GOLANG_ENGINE: Ingesting sports feed API stream : latency 32ms : JSON parsed',
     '[00:00:02] AIRGIFT_ROUTER: Multi-supplier gateway online : Redis queue health nominal',
     '[00:00:03] DOCKER_NODE: 12 microservice containers reporting healthy status',
@@ -15,6 +16,9 @@ export default function SystemsModal({ isOpen, onClose, onSwitchSector }) {
 
     const samplePool = [
       'GOLANG_WORKER: Processed batch 4,200 events/sec without backpressure',
+      'AIRTIME_ASYNQ: Retry scheduled for pending supplier transaction : backoff 30s',
+      'ALCHEMY_RPC: USDC transfer confirmed on Arbitrum One : order fulfilled',
+      'PAYMENTO_HOOK: Crypto payment callback verified : digital product released',
       'AIRGIFT_PAY: Multi-merchant transaction routed via primary supplier in 142ms',
       'REDIS_CLUSTER: Memory cache hit ratio at 98.4% : volatile-lru policy nominal',
       'GRAFANA_ALERT: P99 latency threshold verified at 48ms across all ingress routes',
@@ -131,28 +135,28 @@ export default function SystemsModal({ isOpen, onClose, onSwitchSector }) {
               <div className="skill-meter-group">
                 <div className="skill-meter">
                   <div className="skill-info">
-                    <span>Golang (Go)</span>
+                    <span>Golang (Go) · Echo</span>
                     <span>95%</span>
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '95%' }}></div></div>
                 </div>
                 <div className="skill-meter">
                   <div className="skill-info">
-                    <span>Node.js & TypeScript</span>
+                    <span>JavaScript & TypeScript · NestJS, Express</span>
                     <span>91%</span>
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '91%' }}></div></div>
                 </div>
                 <div className="skill-meter">
                   <div className="skill-info">
-                    <span>PHP & Laravel</span>
+                    <span>PHP · Laravel, CodeIgniter, Livewire</span>
                     <span>92%</span>
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '92%' }}></div></div>
                 </div>
                 <div className="skill-meter">
                   <div className="skill-info">
-                    <span>Next.js & React</span>
+                    <span>Vue.js, Next.js & React</span>
                     <span>89%</span>
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '89%' }}></div></div>
@@ -177,7 +181,7 @@ export default function SystemsModal({ isOpen, onClose, onSwitchSector }) {
                 </div>
                 <div className="skill-meter">
                   <div className="skill-info">
-                    <span>Asynchronous Queue Workers</span>
+                    <span>Asynq Distributed Task Queues</span>
                     <span>90%</span>
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '90%' }}></div></div>
@@ -274,6 +278,38 @@ export default function SystemsModal({ isOpen, onClose, onSwitchSector }) {
                   </div>
                   <div className="meter-bar"><div className="meter-fill" style={{ width: '93%' }}></div></div>
                 </div>
+              </div>
+            </div>
+
+            {/* Web3 & Payment Integrations */}
+            <div className="system-card system-card-wide">
+              <div className="system-card-header">
+                <span className="system-icon" aria-hidden="true">◈</span>
+                <h3>WEB3 & PAYMENT INTEGRATIONS</h3>
+              </div>
+              <p className="system-desc">
+                On-chain payment verification, crypto gateways, and B2B digital product supply chains.
+              </p>
+              <div className="tech-stack-row">
+                {[
+                  'Smart Contract Integration',
+                  'Paymento Crypto Gateway',
+                  'Alchemy RPC',
+                  'USDC · USDT0',
+                  'Arbitrum One',
+                  'Base',
+                  'OP Mainnet',
+                  'Polygon',
+                  'PPOB Gateways',
+                  'E-wallet & Pulsa Gateways',
+                  'Game Voucher APIs',
+                  'Supplier APIs',
+                  'B2B Integrations',
+                ].map((tag) => (
+                  <span key={tag} className="tech-tag">
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

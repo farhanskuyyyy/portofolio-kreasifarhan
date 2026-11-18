@@ -229,6 +229,62 @@ class CosmicAudioEngine {
     } catch (e) {}
   }
 
+  playSingularityPulse() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const ctx = this.ctx;
+      const now = ctx.currentTime;
+
+      // 1. Sub-bass gravitational drop
+      const sub = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(110, now);
+      sub.frequency.exponentialRampToValueAtTime(24, now + 1.6);
+      subGain.gain.setValueAtTime(0.0001, now);
+      subGain.gain.exponentialRampToValueAtTime(0.32, now + 0.05);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+      sub.connect(subGain);
+      subGain.connect(ctx.destination);
+      sub.start(now);
+      sub.stop(now + 1.85);
+
+      // 2. Expanding shockwave whoosh (noise swept by a lowpass)
+      const len = Math.floor(ctx.sampleRate * 2.2);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2400, now);
+      filter.frequency.exponentialRampToValueAtTime(90, now + 2.0);
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.16, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.1);
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 2.2);
+
+      // 3. Bright relativistic shimmer
+      const shimmer = ctx.createOscillator();
+      const shimmerGain = ctx.createGain();
+      shimmer.type = 'triangle';
+      shimmer.frequency.setValueAtTime(1320, now);
+      shimmer.frequency.exponentialRampToValueAtTime(440, now + 0.9);
+      shimmerGain.gain.setValueAtTime(0.05, now);
+      shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      shimmer.connect(shimmerGain);
+      shimmerGain.connect(ctx.destination);
+      shimmer.start(now);
+      shimmer.stop(now + 1.05);
+    } catch (e) {}
+  }
+
   playRocketHover() {
     this.init();
     if (!this.ctx) return;

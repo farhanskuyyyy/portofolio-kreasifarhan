@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { audioEngine } from '../utils/audio';
 
 export const TECH_STARS = [
@@ -7,8 +7,8 @@ export const TECH_STARS = [
     name: 'GOLANG',
     mastery: 96,
     scale: 1.35,
-    role: 'CORE CONCURRENCY & GRPC',
-    title: 'Golang (Go) : 96% Dominance · High Concurrency, Distributed Microservices, gRPC',
+    role: 'CORE CONCURRENCY & ECHO',
+    title: 'Golang (Go) : 96% Dominance · Echo Framework, High Concurrency, Asynq Task Queues',
     color: '#00ADD8',
     rgb: '0, 173, 216',
     freq: 528,
@@ -32,7 +32,7 @@ export const TECH_STARS = [
     mastery: 94,
     scale: 1.25,
     role: 'CACHE & QUEUE PIPELINES',
-    title: 'Redis : 94% Dominance · In-Memory Store, Pub/Sub, Distributed Locks, Streams',
+    title: 'Redis : 94% Dominance · In-Memory Cache, Asynq Job Queues, Producer-Consumer Pipelines',
     color: '#DC382D',
     rgb: '220, 56, 45',
     freq: 940,
@@ -226,10 +226,14 @@ export const TECH_STARS = [
 
 export default function CelestialSkillStars() {
   const [starStates, setStarStates] = useState({});
+  // Mirror of starStates so the meteor impact listener always reads the latest state
+  const starStatesRef = useRef(starStates);
+  starStatesRef.current = starStates;
 
   const handleClick = (tech) => {
-    const currentState = starStates[tech.id] || 'idle';
+    const currentState = starStatesRef.current[tech.id] || 'idle';
     if (currentState !== 'idle') return;
+    starStatesRef.current = { ...starStatesRef.current, [tech.id]: 'exploding' };
 
     // 1. Play cosmic pop explosion sound effect
     audioEngine.playSkillPopExplosion(tech.freq);
@@ -262,6 +266,19 @@ export default function CelestialSkillStars() {
       }, 800);
     }, 2800);
   };
+
+  const handleClickRef = useRef(handleClick);
+  handleClickRef.current = handleClick;
+
+  // Meteor strikes (MeteorShower) detonate a skill planet exactly like a click
+  useEffect(() => {
+    const handleImpact = (e) => {
+      const tech = TECH_STARS.find((t) => t.id === e.detail?.id);
+      if (tech) handleClickRef.current(tech);
+    };
+    window.addEventListener('skillStarImpact', handleImpact);
+    return () => window.removeEventListener('skillStarImpact', handleImpact);
+  }, []);
 
   return (
     <div className="celestial-stars-layer" aria-label="Constellation of Skills and Technologies">

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const INTRO_PHRASES = [
-  'Architecting high-throughput backends, real-time APIs & cloud architectures.',
-  'Building mission-critical microservices with Golang, Node.js & modern React.',
-  'Crafting resilient distributed systems, event streams & low-latency gateways.',
-  'Bridging robust server architectures with intuitive modern web experiences.',
+  '5+ years building scalable web apps, B2B platforms & high-performance APIs.',
+  'Engineering Golang (Echo) & Laravel backends with Asynq + Redis task queues.',
+  'Integrating Web3 payments: smart contracts & multi-chain stablecoin transfers.',
+  'Shipping observable systems with Docker, Grafana & Prometheus.',
 ];
 
 export default function HeroOverlay() {
@@ -45,7 +45,7 @@ export default function HeroOverlay() {
       <div className="hero-beacon-pip" aria-hidden="true"></div>
       <span className="hero-status-tag">SOLAR SYSTEM : CORE ACTIVE</span>
       <h1 className="hero-title-name">FARHAN ARFIANTO</h1>
-      <p className="hero-role-title">FULLSTACK DEVELOPER</p>
+      <p className="hero-role-title">FULLSTACK DEVELOPER · BACKEND ENGINEER</p>
 
       {/* Elegant Typing Effect Introduction */}
       <div className="hero-typewriter-container" aria-live="polite">
@@ -54,7 +54,7 @@ export default function HeroOverlay() {
         <span className="typewriter-cursor" aria-hidden="true">|</span>
       </div>
 
-      <div className="hero-subline">Click any revolving planet or tech logo to inspect architecture</div>
+      <div className="hero-subline">Click any planet or tech logo to inspect, or tap the singularity core for a gravity pulse</div>
     </div>
   );
 }

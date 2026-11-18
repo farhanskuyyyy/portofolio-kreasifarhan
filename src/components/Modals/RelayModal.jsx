@@ -298,6 +298,15 @@ export default function RelayModal({ isOpen, onClose, onSwitchSector }) {
                     <span aria-hidden="true">↗</span>
                   </a>
                   <a
+                    href="https://cv.kreasifarhan.id"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="channel-btn"
+                  >
+                    <span>ONLINE CV (cv.kreasifarhan.id)</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                  <a
                     href="https://kreasifarhan.id"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -314,12 +323,11 @@ export default function RelayModal({ isOpen, onClose, onSwitchSector }) {
                 <span className="info-label">OFFICIAL DOSSIER</span>
                 <h4 className="dossier-title">Farhan Arfianto Flight Resume (CV)</h4>
                 <p className="dossier-desc">
-                  Curriculum vitae documenting professional experience at Lumoshive, academic credentials at UNINDRA (GPA 3.61), and complete technical capabilities.
+                  ATS-friendly curriculum vitae: 5+ years across Lumoshive and PT Anggada Duta Wisesa, key projects (Airtime, Fantasy Eleven, Airgift, Gameshop, HRIS), UNINDRA (GPA 3.61), and full technical competencies.
                 </p>
                 <a
-                  href="https://kreasifarhan.id"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/Farhan-Arfianto-ATS-CV.pdf"
+                  download="Farhan Arfianto - ATS CV.pdf"
                   className="download-resume-btn"
                 >
                   <span>DOWNLOAD RESUME (CV)</span>

@@ -7,6 +7,8 @@ import PlanetMarkers from './components/PlanetMarkers';
 import CelestialSkillStars from './components/CelestialSkillStars';
 import RadarHud from './components/RadarHud';
 import CosmicRocketOpening from './components/CosmicRocketOpening';
+import MeteorShower from './components/MeteorShower';
+import SingularityProfile from './components/SingularityProfile';
 
 import MissionsModal from './components/Modals/MissionsModal';
 import FlightLogModal from './components/Modals/FlightLogModal';
@@ -48,37 +50,6 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeModal]);
-
-  // Shooting stars background effect
-  useEffect(() => {
-    const container = document.getElementById('shooting-stars-container');
-    if (!container) return;
-
-    const spawnMeteor = () => {
-      if (document.hidden) return;
-      const star = document.createElement('div');
-      star.className = 'shooting-star';
-
-      const startX = Math.random() * window.innerWidth * 0.85;
-      const startY = Math.random() * (window.innerHeight * 0.45);
-      const angle = 28 + Math.random() * 24;
-      const length = 110 + Math.random() * 160;
-
-      star.style.left = `${startX}px`;
-      star.style.top = `${startY}px`;
-      star.style.width = `${length}px`;
-      star.style.transform = `rotate(${angle}deg)`;
-
-      container.appendChild(star);
-      setTimeout(() => star.remove(), 1100);
-    };
-
-    const interval = setInterval(() => {
-      if (Math.random() > 0.4) spawnMeteor();
-    }, 4500);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleToggleAudio = () => {
     const active = audioEngine.toggle();
@@ -143,7 +114,7 @@ export default function App() {
 
       {/* Atmospheric Overlays */}
       <div className="mist-overlay" aria-hidden="true"></div>
-      <div id="shooting-stars-container" className="shooting-stars-layer" aria-hidden="true"></div>
+      <MeteorShower />
 
       {/* Autonomous Dogfight Fleet */}
       <FleetEntities />
@@ -172,6 +143,9 @@ export default function App() {
           />
         </main>
       </div>
+
+      {/* Gravity Pulse core profile (click the central singularity) */}
+      <SingularityProfile onOpenSector={handleOpenSector} suppressed={activeModal !== null} />
 
       {/* Cockpit Command Modals with Direct Switching */}
       <MissionsModal

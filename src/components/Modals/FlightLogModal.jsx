@@ -44,7 +44,7 @@ export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
         <header className="modal-header">
           <div className="modal-header-left">
             <div className="sector-code-badge">SECTOR 02 // CAREER & EDUCATION</div>
-            <h2 id="exp-modal-title" class="modal-title">
+            <h2 id="exp-modal-title" className="modal-title">
               FLIGHT LOG & MILESTONES
             </h2>
           </div>
@@ -123,26 +123,38 @@ export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
                     <span className="entry-period">APRIL 2021 : PRESENT</span>
                     <span className="entry-badge active">CURRENT MISSION</span>
                   </div>
-                  <h3 className="entry-title">Software Developer (Full-time)</h3>
+                  <h3 className="entry-title">Fullstack Developer (Full-time)</h3>
                   <h4 className="entry-company">LUMOSHIVE : Jakarta, Indonesia</h4>
                   <p className="entry-desc">
-                    Spearheading high-performance backend architecture, payment integrations, transactional middleware, and system observability suites across multiple production platforms.
+                    Designing, building, and maintaining B2B transactional platforms, high-performance API ecosystems, Web3 payment integrations, and system observability suites across multiple production platforms.
                   </p>
                   <ul className="entry-bullets">
                     <li>
-                      Architected a high-performance backend in <strong>Golang</strong> to ingest and process real-time external sports APIs, powering gameweek-based dream team selection mechanics and match score prediction systems.
+                      Engineered and architected <strong>Airtime (B2B PPOB Platform)</strong> in <strong>Golang and PostgreSQL</strong>, establishing a high-throughput engine for automated pulse, data, and utility bill disbursements.
                     </li>
                     <li>
-                      Engineered <strong>Airgift</strong>, a specialized transactional middleware connecting multiple top-up suppliers to portal merchants; utilized <strong>Laravel, Redis, PostgreSQL, Docker, Grafana, and Prometheus</strong> to orchestrate high-throughput multi-party transactions.
+                      Implemented <strong>Asynq</strong> distributed task queue backed by <strong>Redis</strong> for asynchronous transaction dispatching, retry mechanisms, and supplier status polling with <strong>99.9% delivery reliability</strong>.
                     </li>
                     <li>
-                      Developed and launched a dedicated consumer <strong>game top-up portal</strong>, integrating multi-channel e-wallet and mobile billing (pulsa) payment gateways with automated delivery.
+                      Integrated smart contracts via the <strong>Paymento</strong> cryptocurrency payment gateway and engineered wallet-to-wallet stablecoin transfers (<strong>USDC and USDT0</strong> across Arbitrum One, Base, OP Mainnet, and Polygon) utilizing <strong>Alchemy RPC</strong> to automate real-time on-chain payment confirmation and product fulfillment.
                     </li>
                     <li>
-                      Maintained, optimized, and upgraded core modules of an enterprise-grade <strong>HRIS (Human Resource Information System)</strong> website using Laravel, including attendance monitoring and employee directories.
+                      Architected a high-performance backend in <strong>Golang (Echo)</strong> to ingest and process real-time external sports APIs, power gameweek dream team selection mechanics, and run match score prediction systems.
                     </li>
                     <li>
-                      Containerized Laravel applications using Docker and implemented <strong>Grafana dashboards</strong> to monitor incoming/outgoing API requests, reducing production debugging latency.
+                      Engineered <strong>Airgift</strong>, a robust transactional middleware connecting multiple top-up suppliers to portal merchants using <strong>Laravel, Redis, PostgreSQL, Docker, Grafana, and Prometheus</strong>.
+                    </li>
+                    <li>
+                      Developed and launched <strong>Gameshop</strong>, a dedicated consumer game top-up portal integrating multi-channel e-wallet and mobile billing payment gateways with automated voucher delivery.
+                    </li>
+                    <li>
+                      Maintained, optimized, and upgraded core modules of an enterprise-grade <strong>HRIS</strong> application using <strong>Laravel and Livewire</strong> (attendance monitoring, leave management, employee directory).
+                    </li>
+                    <li>
+                      Containerized applications using <strong>Docker</strong> to standardize development environments and implemented <strong>Grafana/Prometheus</strong> dashboards for real-time API request monitoring and tracking latency.
+                    </li>
+                    <li>
+                      Collaborated with and mentored team members, conducting code reviews and resolving technical blockers to maintain high code quality.
                     </li>
                   </ul>
                 </div>
@@ -192,14 +204,14 @@ export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
                   <h3 className="entry-title">Bachelor of Science in Information Technology (S1)</h3>
                   <h4 className="entry-company">Universitas Indraprasta PGRI (UNINDRA) : Jakarta, Indonesia</h4>
                   <p className="entry-desc">
-                    Comprehensive study of software engineering principles, algorithm design, distributed computing, database management, and enterprise software architecture.
+                    Undergraduate study in information technology with a focus on web programming, software development, and database management.
                   </p>
                   <ul className="entry-bullets">
                     <li>
-                      Graduated with Honors / High Distinction with a cumulative Grade Point Average of <strong>3.61 / 4.00</strong>.
+                      Cumulative Grade Point Average of <strong>3.61 / 4.00</strong>.
                     </li>
                     <li>
-                      Key Areas: PHP, Web Programming, Software Development Life Cycle, Database Normalization and Optimization.
+                      Focus: PHP, Web Programming, Software Development, Database Management.
                     </li>
                   </ul>
                 </div>
@@ -218,11 +230,11 @@ export default function FlightLogModal({ isOpen, onClose, onSwitchSector }) {
                   <h3 className="entry-title">Vocational High School Diploma : Network & System Administration</h3>
                   <h4 className="entry-company">SMKN 26 Jakarta : Jakarta, Indonesia</h4>
                   <p className="entry-desc">
-                    Intensive 4-year vocational training specializing in computer networking, server provisioning, Linux administration, and network security infrastructure.
+                    Vocational training in computer networking and systems administration.
                   </p>
                   <ul className="entry-bullets">
                     <li>
-                      Specialization: Network Infrastructure, Server Operating Systems (Linux/Unix), Routing, Switching, and Systems Administration.
+                      Focus: Network Infrastructure, Systems Administration, IT Fundamentals.
                     </li>
                   </ul>
                 </div>

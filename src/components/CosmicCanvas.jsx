@@ -30,6 +30,9 @@ export default function CosmicCanvas({
     mouseX: 0,
     mouseY: 0,
     currentCamTarget: 'overview',
+    coreHovered: false,
+    pulseStart: 0,
+    pulseDetonated: {},
   });
 
   // Sync auto orbit prop
@@ -303,6 +306,33 @@ export default function CosmicCanvas({
     const sunLight = new THREE.PointLight(0xffe4b5, 4.8, 120);
     gargantuaGroup.add(sunLight);
 
+    // Clickable singularity core (Gravity Pulse) + the gravitational shockwave rings it emits
+    const singularityHit = new THREE.Mesh(
+      new THREE.SphereGeometry(3.2, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false })
+    );
+    singularityHit.userData = { isCore: true };
+    gargantuaGroup.add(singularityHit);
+
+    const createPulseRing = (color) => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.97, 1.0, 160),
+        new THREE.MeshBasicMaterial({
+          color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.visible = false;
+      solarPlane.add(ring);
+      return ring;
+    };
+    const pulseRings = [createPulseRing(0xfff3d1), createPulseRing(0xd4a373)];
+
     // 4. Concentric Orbit Rings & Asteroid Belt
     const createRing = (radius, colorHex, opacity) => {
       const ringGeo = new THREE.RingGeometry(radius - 0.03, radius + 0.03, 128);
@@ -422,6 +452,7 @@ export default function CosmicCanvas({
     p1Core.userData = { sectorKey: 'missions', label: 'P-01 // MISSIONS & ARCHITECTURE' };
     p1Group.add(hit1);
     interactiveHitObjects.push(hit1, p1Core);
+    interactiveHitObjects.push(singularityHit);
 
     // Planet 02: Flight Log & Credentials ("Mann's Frozen World")
     const p2Group = new THREE.Group();
@@ -481,9 +512,43 @@ export default function CosmicCanvas({
     const p3Group = new THREE.Group();
     solarPlane.add(p3Group);
 
+    // Banded gas giant texture with an oval storm so the axial spin is actually visible
+    const createGasGiantTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      const bands = ['#8a4636', '#c06c54', '#d4a373', '#a85a44', '#e0a96d', '#c06c54', '#7a3e30', '#d4a373', '#b5634b'];
+      let y = 0;
+      while (y < c.height) {
+        const h = 10 + Math.random() * 26;
+        ctx.fillStyle = bands[Math.floor(Math.random() * bands.length)];
+        ctx.fillRect(0, y, c.width, h);
+        y += h;
+      }
+      // Turbulent streaks along the bands
+      for (let i = 0; i < 260; i++) {
+        ctx.fillStyle = `rgba(${Math.random() < 0.5 ? '245, 242, 235' : '58, 27, 20'}, ${0.05 + Math.random() * 0.12})`;
+        ctx.fillRect(Math.random() * c.width, Math.random() * c.height, 20 + Math.random() * 90, 1 + Math.random() * 3);
+      }
+      // Great storm
+      ctx.fillStyle = 'rgba(245, 242, 235, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(150, 165, 34, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(192, 108, 84, 0.9)';
+      ctx.beginPath();
+      ctx.ellipse(150, 165, 22, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      return tex;
+    };
+
     const p3CoreGeo = new THREE.SphereGeometry(1.9, 36, 36);
     const p3CoreMat = new THREE.MeshStandardMaterial({
-      color: 0xc06c54,
+      color: 0xffffff,
+      map: createGasGiantTexture(),
       emissive: 0x3a1b14,
       roughness: 0.45,
       metalness: 0.15,
@@ -515,6 +580,24 @@ export default function CosmicCanvas({
       new THREE.MeshBasicMaterial({ color: 0xe0a96d, side: THREE.DoubleSide, transparent: true, opacity: 0.22 })
     );
     p3RingGroup.add(p3R1, p3R2, p3R3);
+
+    // Ring dust: uneven particles make the ring rotation readable
+    const p3DustCount = 520;
+    const p3DustPos = new Float32Array(p3DustCount * 3);
+    for (let i = 0; i < p3DustCount; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 2.4 + Math.random() * 2.6;
+      p3DustPos[i * 3] = Math.cos(a) * r;
+      p3DustPos[i * 3 + 1] = Math.sin(a) * r;
+      p3DustPos[i * 3 + 2] = (Math.random() - 0.5) * 0.08;
+    }
+    const p3DustGeo = new THREE.BufferGeometry();
+    p3DustGeo.setAttribute('position', new THREE.BufferAttribute(p3DustPos, 3));
+    const p3Dust = new THREE.Points(
+      p3DustGeo,
+      new THREE.PointsMaterial({ color: 0xfff3d1, size: 0.07, transparent: true, opacity: 0.85, depthWrite: false })
+    );
+    p3RingGroup.add(p3Dust);
 
     const p3MoonGroup = new THREE.Group();
     p3Group.add(p3MoonGroup);
@@ -629,6 +712,7 @@ export default function CosmicCanvas({
         key: 'systems',
         group: p3Group,
         coreMesh: p3Core,
+        wireMesh: p3BandMesh,
         ringGroup: p3RingGroup,
         moonGroup: p3MoonGroup,
         radius: 17.5,
@@ -964,6 +1048,19 @@ export default function CosmicCanvas({
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
 
+    // Gravity Pulse: a gravitational wave rolls out from the singularity, shoving each planet
+    // outward as it passes and detonating the skill planets in a chain reaction.
+    const PULSE_DURATION = 2600; // ms
+    const PULSE_MAX_RADIUS = 30;
+    const triggerGravityPulse = () => {
+      const s = stateRef.current;
+      if (s.pulseStart && performance.now() - s.pulseStart < PULSE_DURATION) return;
+      s.pulseStart = performance.now();
+      s.pulseDetonated = {};
+      audioEngine.playSingularityPulse();
+      window.dispatchEvent(new CustomEvent('singularityPulse'));
+    };
+
     const handleCanvasClick = (e) => {
       if (stateRef.current.lastDragDistance > 6) {
         stateRef.current.lastDragDistance = 0;
@@ -991,6 +1088,11 @@ export default function CosmicCanvas({
 
       raycaster.setFromCamera(mouseVector, camera);
       const intersects = raycaster.intersectObjects(interactiveHitObjects);
+
+      if (intersects.length > 0 && intersects[0].object.userData.isCore) {
+        triggerGravityPulse();
+        return;
+      }
 
       if (intersects.length > 0) {
         const sectorKey = intersects[0].object.userData.sectorKey;
@@ -1099,6 +1201,17 @@ export default function CosmicCanvas({
         detectedSector = intersects[0].object.userData.sectorKey;
       }
 
+      const overCore = intersects.length > 0 && !!intersects[0].object.userData.isCore;
+      if (overCore !== stateRef.current.coreHovered) {
+        stateRef.current.coreHovered = overCore;
+        if (overCore) {
+          document.body.style.cursor = 'pointer';
+          audioEngine.playUiClick(420, 'sine', 0.03);
+        } else if (!stateRef.current.hoveredPlanet) {
+          document.body.style.cursor = '';
+        }
+      }
+
       if (detectedSector) {
         if (stateRef.current.hoveredPlanet !== detectedSector) {
           stateRef.current.hoveredPlanet = detectedSector;
@@ -1197,6 +1310,8 @@ export default function CosmicCanvas({
     const tempAheadPos = new THREE.Vector3();
     const pAheadProj = new THREE.Vector3();
 
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
@@ -1204,9 +1319,30 @@ export default function CosmicCanvas({
       starPoints.rotation.y += 0.00025;
       starPoints.rotation.x += 0.0001;
 
+      // Gravity Pulse progress (t: 0..1 while active, -1 when idle)
+      const pulseElapsed = stateRef.current.pulseStart ? performance.now() - stateRef.current.pulseStart : Infinity;
+      const pulseT = pulseElapsed < PULSE_DURATION ? pulseElapsed / PULSE_DURATION : -1;
+      const pulseWaveR = pulseT >= 0 ? (1 - Math.pow(1 - pulseT, 1.6)) * PULSE_MAX_RADIUS : -100;
+      const pulseFlash = pulseT >= 0 ? Math.exp(-pulseT * 7) : 0;
+      const pulseBoost = pulseT >= 0 ? Math.pow(1 - pulseT, 2) : 0;
+      // Radial shove applied to bodies near the wavefront
+      const pulsePush = (r) => (pulseT >= 0 ? 1.8 * Math.exp(-Math.pow((pulseWaveR - r) / 2.4, 2)) * (1 - pulseT) : 0);
+
+      pulseRings.forEach((ring, i) => {
+        const ringR = pulseWaveR - i * 2.2;
+        ring.visible = pulseT >= 0 && ringR > 0.5;
+        if (ring.visible) {
+          ring.scale.set(ringR, ringR, ringR);
+          ring.material.opacity = (i === 0 ? 0.85 : 0.45) * (1 - pulseT);
+        }
+      });
+
+      glowSprite.scale.setScalar(11.5 * (1 + 0.9 * pulseFlash + (stateRef.current.coreHovered ? 0.12 : 0)));
+      sunLight.intensity = 4.8 * (1 + 3 * pulseFlash);
+
       // Rotate Gargantua Accretion Disk, Corona, and Lensing Arc
       if (gargantuaDiskGroup) {
-        gargantuaDiskGroup.rotation.y -= 0.014;
+        gargantuaDiskGroup.rotation.y -= 0.014 * (1 + 7 * pulseBoost);
       }
       if (gargantuaCorona) {
         gargantuaCorona.rotation.y += 0.008;
@@ -1229,9 +1365,10 @@ export default function CosmicCanvas({
 
         // Active docked planet slows down to 0.12x; hover slows to 0.2x!
         p.angle += p.speed * (isDockedTarget ? 0.12 : isHovered ? 0.2 : 1.0);
-        p.group.position.x = Math.cos(p.angle) * p.radius;
-        p.group.position.z = Math.sin(p.angle) * p.radius;
-        p.group.position.y = 0;
+        const pPush = pulsePush(p.radius);
+        p.group.position.x = Math.cos(p.angle) * (p.radius + pPush);
+        p.group.position.z = Math.sin(p.angle) * (p.radius + pPush);
+        p.group.position.y = pPush * 0.35;
 
         // Smooth scale lerp (enlarge when hovered!)
         p.targetScale = isHovered ? 1.35 : 1.0;
@@ -1247,7 +1384,7 @@ export default function CosmicCanvas({
         if (p.ring2) p.ring2.rotation.x += 0.015;
         if (p.moonOrbitGroup) p.moonOrbitGroup.rotation.y += 0.038;
         if (p.moonGroup) p.moonGroup.rotation.y += 0.032;
-        if (p.ringGroup) p.ringGroup.rotation.z += 0.005;
+        if (p.ringGroup) p.ringGroup.rotation.z += 0.012;
         if (p.probeGroup) p.probeGroup.rotation.y += 0.045;
       }
 
@@ -1255,9 +1392,16 @@ export default function CosmicCanvas({
       for (const id in skillNodes) {
         const sData = skillNodes[id];
         sData.angle += sData.speed;
-        sData.node.position.x = Math.cos(sData.angle) * sData.radius;
-        sData.node.position.z = Math.sin(sData.angle) * sData.radius;
-        sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset;
+        const sPush = pulsePush(sData.radius);
+        sData.node.position.x = Math.cos(sData.angle) * (sData.radius + sPush);
+        sData.node.position.z = Math.sin(sData.angle) * (sData.radius + sPush);
+        sData.node.position.y = Math.sin(sData.angle * sData.yFreq) * sData.yAmp + sData.yOffset + sPush * 0.35;
+
+        // Chain reaction: the wavefront detonates each skill planet as it rolls past
+        if (pulseT >= 0 && pulseWaveR >= sData.radius && !stateRef.current.pulseDetonated[id]) {
+          stateRef.current.pulseDetonated[id] = true;
+          window.dispatchEvent(new CustomEvent('skillStarImpact', { detail: { id } }));
+        }
 
         const baseScale = (sData.scale || 1.0) * 0.9;
         if (sData.isExploding) {
@@ -1394,7 +1538,12 @@ export default function CosmicCanvas({
       }
 
       camera.up.set(0, 1, 0);
-      camera.position.set(s.camLerp.x, s.camLerp.y, s.camLerp.z);
+      const shake = pulseT >= 0 && !reducedMotion ? 0.35 * pulseFlash + 0.08 * pulseBoost : 0;
+      camera.position.set(
+        s.camLerp.x + (Math.random() - 0.5) * shake,
+        s.camLerp.y + (Math.random() - 0.5) * shake,
+        s.camLerp.z + (Math.random() - 0.5) * shake
+      );
       camera.lookAt(s.camLerp.tx, s.camLerp.ty, s.camLerp.tz);
 
       renderer.render(scene, camera);
@@ -1508,7 +1657,9 @@ export default function CosmicCanvas({
           const dx = fxAhead - fx;
           const dy = fyAhead - fy;
           const baseAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-          const headingDeg = isRocket ? baseAngle + 90 : baseAngle;
+          // Rockets point along their path; flying saucers stay level and only bank into horizontal motion
+          const bankDeg = Math.max(-16, Math.min(16, (dx / (Math.abs(dx) + Math.abs(dy) + 1)) * 16));
+          const headingDeg = isRocket ? baseAngle + 90 : bankDeg;
 
           const depthFactor = Math.max(0.70, Math.min(1.25, 28 / dist));
           const mobFactor = mob ? 0.65 : 1.05;
